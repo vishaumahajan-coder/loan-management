@@ -21,12 +21,19 @@ exports.updateSetting = async (req, res) => {
         if (!key) return res.status(400).json({ message: 'Setting key is required' });
         
         // Convert boolean to string for DB storage
-        const strValue = typeof value === 'boolean' ? (value ? 'true' : 'false') : value;
+        const strValue = (typeof value === 'boolean' ? (value ? 'true' : 'false') : value) ?? null;
 
         await db.query(
             'INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
             [key, strValue, strValue]
         );
+
+        // Add audit log
+        if (req.user) {
+            await db.execute('INSERT INTO audit_logs (action, user_id, details) VALUES (?, ?, ?)', 
+                ['UPDATE_SETTING', req.user.id, `Updated setting ${key} to ${strValue}`]);
+        }
+
         res.json({ message: 'Setting updated successfully' });
     } catch (err) {
         console.error('Error updating setting:', err);
