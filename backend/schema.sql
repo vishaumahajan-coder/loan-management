@@ -139,9 +139,6 @@ CREATE TABLE IF NOT EXISTS membership_plans (
     status ENUM('active', 'inactive') DEFAULT 'active'
 );
 
-    FOREIGN KEY (plan_id) REFERENCES membership_plans(id) ON DELETE CASCADE
-);
-
 -- 12. Upgrade Requests (Manual Flow)
 CREATE TABLE IF NOT EXISTS upgrade_requests (
     id INT AUTO_INCREMENT PRIMARY KEY,

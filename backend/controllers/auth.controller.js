@@ -2,16 +2,27 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+// Password strength validation helper
+function validatePassword(password) {
+    const errors = [];
+    if (password.length < 8) errors.push('at least 8 characters');
+    if (!/[A-Z]/.test(password)) errors.push('one uppercase letter');
+    if (!/[a-z]/.test(password)) errors.push('one lowercase letter');
+    if (!/[0-9]/.test(password)) errors.push('one number');
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) errors.push('one special character (!@#$%^&* etc.)');
+    return errors;
+}
+
 // Register Lender
 exports.register = async (req, res) => {
     try {
         console.log('Registration Request Body:', req.body);
         console.log('Registration Files:', req.files);
         let { name, phone, email, password, businessName, referralCode, role, nrc } = req.body;
-        
+
         // Default role to lender if not provided
         role = role === 'borrower' ? 'borrower' : 'lender';
-        
+
         // Fallback for admin-created users without password
         if (!password) {
             password = 'LendaNet@' + Math.floor(100+Math.random()*900);
@@ -29,6 +40,12 @@ exports.register = async (req, res) => {
         // 1. Basic Validation
         if (!name || !phone || !password || !role) {
             return res.status(400).json({ message: 'All required fields must be filled' });
+        }
+
+        // 1.5 Password strength validation
+        const pwErrors = validatePassword(password);
+        if (pwErrors.length > 0) {
+            return res.status(400).json({ message: 'Password must contain: ' + pwErrors.join(', ') });
         }
 
         // 2. NRC Validation (for borrowers or if provided)
@@ -149,9 +166,15 @@ exports.login = async (req, res) => {
                 phone: user.phone,
                 nrc: user.nrc,
                 referral_code: user.referral_code,
-                referralCode: user.referral_code, 
+                referralCode: user.referral_code,
                 role: user.role,
-                status: user.status
+                status: user.status,
+                membership_tier: user.membership_tier || 'free',
+                plan_type: user.membership_tier || 'free',
+                plan_label: user.membership_tier === 'free' ? 'Free Plan' : 'Premium',
+                business_name: user.business_name,
+                businessName: user.business_name,
+                license_url: user.license_url
             }
         });
     } catch (error) {
@@ -174,6 +197,10 @@ exports.updateProfile = async (req, res) => {
         if (email) { updates.push('email = ?'); params.push(email); }
         
         if (newPassword) {
+            const pwErrors = validatePassword(newPassword);
+            if (pwErrors.length > 0) {
+                return res.status(400).json({ message: 'Password must contain: ' + pwErrors.join(', ') });
+            }
             const hashedPassword = await bcrypt.hash(newPassword, 10);
             updates.push('password = ?');
             params.push(hashedPassword);
@@ -196,13 +223,45 @@ exports.updateProfile = async (req, res) => {
 // Verify OTP (Mock for now)
 exports.verifyOtp = async (req, res) => {
     const { userId, otp } = req.body;
-    
+
     // In a real app, verify against stored OTP
     if (otp === '123456') {
-        // Update status for demo purposes, although normally admin approves lender
-        // For borrowers, this might make them active.
         return res.json({ success: true, message: 'OTP verified successfully' });
     } else {
         return res.status(400).json({ success: false, message: 'Invalid OTP' });
+    }
+};
+
+// Get current user profile (for refreshing user data after admin changes)
+exports.getMe = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const [users] = await db.execute('SELECT * FROM users WHERE id = ?', [userId]);
+
+        if (users.length === 0) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const user = users[0];
+        res.json({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            nrc: user.nrc,
+            referral_code: user.referral_code,
+            referralCode: user.referral_code,
+            role: user.role,
+            status: user.status,
+            membership_tier: user.membership_tier || 'free',
+            plan_type: user.membership_tier || 'free',
+            plan_label: user.membership_tier === 'free' ? 'Free Plan' : 'Premium',
+            business_name: user.business_name,
+            businessName: user.business_name,
+            license_url: user.license_url
+        });
+    } catch (error) {
+        console.error('GetMe Error:', error);
+        res.status(500).json({ message: 'Server error fetching user data' });
     }
 };

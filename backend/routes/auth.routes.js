@@ -20,6 +20,7 @@ const { protect } = require('../middleware/auth.middleware');
 router.post('/register', upload.any(), authController.register);
 router.post('/login', authController.login);
 router.post('/verify-otp', authController.verifyOtp);
+router.get('/me', protect, authController.getMe);
 router.put('/update-profile', protect, authController.updateProfile);
 
 module.exports = router;
