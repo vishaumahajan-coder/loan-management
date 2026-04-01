@@ -246,6 +246,51 @@ exports.updateMembership = async (req, res) => {
     }
 };
 
+// Admin - Delete Lender
+exports.deleteLender = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Check if lender exists
+        const [lender] = await db.execute('SELECT * FROM users WHERE id = ? AND role = "lender"', [id]);
+        if (lender.length === 0) return res.status(404).json({ message: 'Lender not found' });
+
+        // Delete related data in correct order (foreign key constraints)
+        // 1. Delete default_ledger entries for loans by this lender
+        await db.execute('DELETE FROM default_ledger WHERE lender_id = ?', [id]);
+
+        // 2. Delete loan_installments for loans created by this lender
+        await db.execute(`DELETE li FROM loan_installments li JOIN loans l ON li.loan_id = l.id WHERE l.lender_id = ?`, [id]);
+
+        // 3. Delete payments for loans by this lender
+        await db.execute(`DELETE p FROM payments p JOIN loans l ON p.loan_id = l.id WHERE l.lender_id = ?`, [id]);
+
+        // 4. Delete loans by this lender
+        await db.execute('DELETE FROM loans WHERE lender_id = ?', [id]);
+
+        // 5. Delete lender_borrowers mapping
+        await db.execute('DELETE FROM lender_borrowers WHERE lender_id = ?', [id]);
+
+        // 6. Delete referrals where this user is referrer or referred
+        await db.execute('DELETE FROM referrals WHERE referrer_id = ? OR referred_user_id = ?', [id, id]);
+
+        // 7. Delete upgrade_requests
+        await db.execute('DELETE FROM upgrade_requests WHERE user_id = ?', [id]);
+
+        // 8. Finally delete the user
+        await db.execute('DELETE FROM users WHERE id = ?', [id]);
+
+        // Audit log
+        await db.execute('INSERT INTO audit_logs (action, user_id, details) VALUES (?, ?, ?)',
+            ['DELETE_LENDER', req.user.id, `Deleted lender: ${lender[0].name} (ID: ${id})`]);
+
+        res.json({ message: 'Lender deleted successfully' });
+    } catch (error) {
+        console.error('Delete Lender Error:', error);
+        res.status(500).json({ message: 'Server error deleting lender' });
+    }
+};
+
 // Admin - Update Lender Status (Approve/Reject)
 exports.updateLenderStatus = async (req, res) => {
     try {
