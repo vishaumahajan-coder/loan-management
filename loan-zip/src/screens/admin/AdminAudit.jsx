@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { PageHeader } from '../../components/UI';
 import api from '../../services/api';
+import { THEME } from '../../theme';
 
 export default function AdminAudit() {
   const [logs, setLogs] = useState([]);
@@ -120,7 +121,6 @@ export default function AdminAudit() {
         <h3 className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] px-2">Verification Chain</h3>
         <div className="space-y-3">
           {filtered.map((log) => {
-            const dt = new Date(log.created_at);
             return (
               <div key={log.id} className="bg-white rounded-2xl p-3 px-5 border border-gray-50 hover:border-blue-600 hover:shadow-lg transition-all group flex items-center justify-between gap-5 relative overflow-hidden">
                  <div className="flex items-center gap-5 relative z-10">
@@ -132,7 +132,7 @@ export default function AdminAudit() {
                   <div className="flex items-center gap-3 text-[9px] font-black text-slate-300 uppercase tracking-widest leading-none">
                      <p>By: {log.userName || log.performedBy || 'System'}</p>
                      <span className="w-1 h-1 rounded-full bg-slate-200"></span>
-                     <p className="text-blue-600/40">{dt.toLocaleString()} • Secure</p>
+                     <p className="text-blue-600/40">{THEME.formatDateTime(log.created_at)} • Secure</p>
                   </div>
                </div>
             </div>

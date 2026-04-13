@@ -25,6 +25,7 @@ export default function LenderLayout() {
   const navigate  = useNavigate();
   const { user, logout } = useAuth();
 
+  const [search, setSearch] = useState('');
   const isActive = (p) => location.pathname.startsWith(p);
 
   const handleLogout = () => { logout(); navigate('/login'); setIsSidebarOpen(false); };
@@ -163,7 +164,7 @@ export default function LenderLayout() {
         </header>
 
         <main className="flex-1 p-4 md:p-8 lg:p-10 pb-28 lg:pb-10 overflow-y-auto w-full max-w-[1600px] mx-auto not-italic">
-          <Outlet />
+          <Outlet context={{ search, setSearch }} />
         </main>
 
         {/* Improved Mobile Bottom Nav */}

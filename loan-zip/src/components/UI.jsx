@@ -88,7 +88,7 @@ export function Btn({ children, variant = 'primary', size = 'md', className = ''
   const sizes = { sm: 'px-4 py-2 text-xs md:text-sm', md: 'px-4 py-3 md:px-6 md:py-3.5 text-sm md:text-base', lg: 'px-8 py-4 text-base md:text-lg' };
 
   const variants = {
-    primary:  'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/30 shadow-md shadow-blue-600/20',
+    primary:  'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg hover:shadow-red-600/30 shadow-md shadow-red-600/20',
     danger:   'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg hover:shadow-red-600/30 shadow-md shadow-red-600/20',
     success:  'bg-green-600 text-white hover:bg-green-700 hover:shadow-lg hover:shadow-green-600/30 shadow-md shadow-green-600/20',
     ghost:    'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm',

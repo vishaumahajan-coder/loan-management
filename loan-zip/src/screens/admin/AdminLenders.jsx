@@ -21,6 +21,7 @@ import {
 import api from '../../services/api';
 import { StatusBadge, Btn, PageHeader, ConfirmDialog } from '../../components/UI';
 import Modal from '../../components/Modal';
+import { THEME } from '../../theme';
 import { useOutletContext } from 'react-router-dom';
 
 import Swal from 'sweetalert2';
@@ -34,6 +35,7 @@ export default function AdminLenders() {
   const [form, setForm]               = useState({ name: '', businessName: '', email: '', phone: '', password: 'LendaNet@123', license: null, nrc_document: null, planType: 'free', nrc: '', companyRegistrationNumber: '', lenderType: 'individual' });
   const [errors, setErrors]           = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [viewLoans, setViewLoans] = useState([]);
 
   const fetchLenders = async () => {
     try {
@@ -59,6 +61,23 @@ export default function AdminLenders() {
   useEffect(() => {
     fetchLenders();
   }, []);
+
+  useEffect(() => {
+    if (viewModal) {
+      const fetchLenderLoans = async () => {
+        try {
+          const response = await api.get(`/admin/lenders/${viewModal.id}/loans`);
+          setViewLoans(response.data);
+        } catch (error) {
+          console.error('Failed to fetch lender loans', error);
+          setViewLoans([]);
+        }
+      };
+      fetchLenderLoans();
+    } else {
+      setViewLoans([]);
+    }
+  }, [viewModal]);
 
   const handleUpdateStatus = async (userId, status, verificationStatus) => {
     const action = verificationStatus === 'verified' ? 'Approve' : 'Reject';
@@ -199,7 +218,7 @@ export default function AdminLenders() {
           </button>
           <button 
             onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-2 shadow-lg shadow-blue-500/20 active:scale-95"
+            className="bg-red-600 text-white px-6 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest hover:bg-red-700 transition-all flex items-center gap-2 shadow-lg shadow-red-500/20 active:scale-95"
           >
             <UserPlus size={16} /> Add New Lender
           </button>
@@ -422,33 +441,33 @@ export default function AdminLenders() {
                        </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                       {[].filter(l => l.lenderId === viewModal.id).length === 0 ? (
+                       {viewLoans.length === 0 ? (
                           <tr><td colSpan="4" className="px-4 py-8 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">No loan records found</td></tr>
                        ) : (
-                          [].filter(l => l.lenderId === viewModal.id).map((loan) => (
+                          viewLoans.map((loan) => (
                              <tr key={loan.id} className="hover:bg-slate-50/50 transition-colors">
                                 <td className="px-4 py-3">
                                    <div className="flex flex-col">
-                                      <span className="text-[11px] font-black text-slate-900 uppercase">{loan.id}</span>
+                                      <span className="text-[11px] font-black text-slate-900 uppercase">#{loan.id}</span>
                                       <span className="text-[9px] text-slate-500 font-bold uppercase">{loan.borrowerName}</span>
                                    </div>
                                 </td>
                                 <td className="px-4 py-3">
                                    <div className="flex flex-col">
-                                      <span className="text-[11px] font-black text-slate-900">K{loan.amount}</span>
-                                      <span className="text-[9px] text-slate-400 font-bold uppercase">Rate: {loan.interestRate}%</span>
+                                      <span className="text-[11px] font-black text-slate-900">K{Number(loan.amount).toLocaleString()}</span>
+                                      <span className="text-[9px] text-slate-400 font-bold uppercase">Rate: {loan.interest_rate}%</span>
                                    </div>
                                 </td>
                                 <td className="px-4 py-3">
                                    <div className="flex flex-col">
-                                      <span className="text-[10px] font-bold text-slate-600 uppercase pb-0.5">{loan.instalments} Installments</span>
-                                      <span className="text-[9px] text-slate-400 font-bold uppercase">Due: {loan.dueDate}</span>
+                                      <span className="text-[10px] font-bold text-slate-600 uppercase pb-0.5">{(loan.instalmentSchedule || []).length} Installments</span>
+                                      <span className="text-[9px] text-slate-400 font-bold uppercase">Due: {THEME.formatDate(loan.due_date)}</span>
                                    </div>
                                 </td>
                                 <td className="px-4 py-3 text-center">
                                    <div className={`inline-block px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${
                                       loan.status === 'active' ? 'bg-blue-50 text-blue-600' :
-                                      loan.status === 'defaulted' ? 'bg-rose-50 text-rose-600' :
+                                      loan.status === 'default' ? 'bg-rose-50 text-rose-600' :
                                       'bg-emerald-50 text-emerald-600'
                                    }`}>
                                       {loan.status}
@@ -670,7 +689,7 @@ export default function AdminLenders() {
             <button 
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="flex-1 py-4 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>

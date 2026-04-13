@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, Activity, CheckCircle, Gift } from 'lucide-react';
+import { CreditCard, Activity, CheckCircle, Gift, AlertTriangle, Camera, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { RiskBadge, StatusBadge, StatCard } from '../../components/UI';
 import { THEME } from '../../theme';
@@ -35,9 +35,10 @@ export default function BorrowerDashboard() {
   const paidLoans    = stats.totalLoans - stats.activeLoans - stats.defaultedLoans;
   const defaults     = stats.defaultedLoans;
   
-  // Dynamic Risk Calculation
-  const risk = defaults > 0 ? 'RED' : (activeLoans > 0 ? 'AMBER' : 'GREEN');
-  const riskStyle    = THEME.risk[risk];
+  // Use Risk Calculation from Backend
+  const risk = stats.risk || 'GREEN';
+  const score = stats.score || 1400;
+  const riskStyle = THEME.risk[risk] || THEME.risk.GREEN;
 
   return (
     <div className="space-y-6">
@@ -51,6 +52,19 @@ export default function BorrowerDashboard() {
         </div>
       </div>
 
+      {/* Verification Status */}
+      {user?.verificationStatus !== 'verified' && (
+        <div className="rounded-xl p-3 border border-amber-200 bg-amber-50 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 flex-shrink-0">
+            <AlertTriangle size={16} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-amber-900">Account Unverified</p>
+            <p className="text-[10px] text-amber-700/80">Your profile is pending verification by admin. Some features may be limited.</p>
+          </div>
+        </div>
+      )}
+
       {/* Risk Badge Card */}
       <div
         className="rounded-xl p-4 border"
@@ -58,9 +72,9 @@ export default function BorrowerDashboard() {
       >
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: riskStyle.text }}>Credit Score</p>
-            <h3 className="text-lg font-black" style={{ color: riskStyle.text }}>
-              {risk === 'GREEN' ? 'Good standing ✅' : risk === 'AMBER' ? 'Medium Risk ⚠️' : 'High Risk 🔴'}
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: riskStyle.text }}>Credit Score Index</p>
+            <h3 className="text-xl font-black mt-1" style={{ color: riskStyle.text }}>
+              {score} — {risk === 'GREEN' ? 'Good standing' : risk === 'AMBER' ? 'Medium Risk' : 'High Risk'}
             </h3>
           </div>
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ background: riskStyle.badge }}>
@@ -68,6 +82,41 @@ export default function BorrowerDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Profile Completion Prompt */}
+      {(!stats.profile?.photo_url || !stats.profile?.nrc_url) && (
+        <div className="rounded-xl p-4 border border-amber-200 bg-amber-50 flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600 flex-shrink-0">
+            <AlertTriangle size={20} />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-sm font-bold text-amber-900">Complete Your Profile</h4>
+            <p className="text-xs text-amber-700/80 mt-1 leading-relaxed">
+              Please upload the following to verify your identity:
+            </p>
+            <div className="mt-2 space-y-1.5">
+              {!stats.profile?.photo_url && (
+                <div className="flex items-center gap-2 text-xs text-amber-800 font-medium">
+                  <Camera size={14} className="text-amber-600" />
+                  <span>Profile Photo</span>
+                </div>
+              )}
+              {!stats.profile?.nrc_url && (
+                <div className="flex items-center gap-2 text-xs text-amber-800 font-medium">
+                  <Upload size={14} className="text-amber-600" />
+                  <span>NRC / ID Document</span>
+                </div>
+              )}
+            </div>
+            <button
+              onClick={() => navigate('/borrower/profile')}
+              className="mt-3 px-4 py-2 bg-amber-600 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-amber-700 transition-all active:scale-95"
+            >
+              Go to Profile
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
@@ -104,7 +153,7 @@ export default function BorrowerDashboard() {
               <div key={l.id} className="flex items-center justify-between px-4 py-3.5">
                 <div>
                   <p className="text-xs font-bold text-gray-800">{l.lenderName}</p>
-                  <p className="text-[10px] text-gray-400">Due: {new Date(l.due_date).toLocaleDateString()} · K{Number(l.amount).toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400">Due: {THEME.formatDate(l.due_date)} · K{Number(l.amount).toLocaleString()}</p>
                 </div>
                 <StatusBadge status={l.status} />
               </div>

@@ -3,6 +3,7 @@ import { Eye, Trash2, Search, Filter, User, ShieldCheck, MapPin, Phone, Calendar
 import api from '../../services/api';
 import { RiskBadge, Btn, PageHeader, ConfirmDialog } from '../../components/UI';
 import Modal from '../../components/Modal';
+import { THEME } from '../../theme';
 
 export default function AdminBorrowers() {
   const [borrowers, setBorrowers] = useState([]);
@@ -10,6 +11,7 @@ export default function AdminBorrowers() {
   const [search, setSearch]       = useState('');
   const [riskFilter, setRiskFilter] = useState('ALL');
   const [viewModal, setViewModal] = useState(null);
+  const [viewLoans, setViewLoans] = useState([]);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const fetchBorrowers = async () => {
@@ -28,8 +30,26 @@ export default function AdminBorrowers() {
     fetchBorrowers();
   }, []);
 
+  useEffect(() => {
+    if (viewModal) {
+      const fetchLoans = async () => {
+        try {
+          const response = await api.get('/admin/loans');
+          const borrowerLoans = response.data.filter(l => l.borrower_id === viewModal.id);
+          setViewLoans(borrowerLoans);
+        } catch (error) {
+          console.error('Failed to fetch loans for borrower', error);
+        }
+      };
+      fetchLoans();
+    } else {
+      setViewLoans([]);
+    }
+  }, [viewModal]);
+
   const filtered = borrowers.filter(b => {
-    const matchSearch = (b.name || '').toLowerCase().includes(search.toLowerCase()) || (b.nrc || '').includes(search);
+    const q = search.toLowerCase();
+    const matchSearch = (b.name || '').toLowerCase().includes(q) || (b.nrc || '').includes(search) || (b.phone || '').includes(search);
     const matchRisk   = riskFilter === 'ALL' || b.risk === riskFilter;
     return matchSearch && matchRisk;
   });
@@ -76,7 +96,7 @@ export default function AdminBorrowers() {
           <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
           <input 
             value={search} onChange={e => setSearch(e.target.value)} 
-            placeholder="Search name or NRC..."
+            placeholder="Search by name, NRC, or phone..."
             className="w-full pl-12 pr-6 py-3.5 bg-white border border-gray-100 rounded-2xl text-[11px] font-bold uppercase tracking-widest focus:border-blue-600 outline-none transition-all shadow-sm"
           />
         </div>
@@ -98,7 +118,9 @@ export default function AdminBorrowers() {
               <tr>
                 <th className="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Borrower Name</th>
                 <th className="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">NRC Number</th>
+                <th className="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Verification</th>
                 <th className="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Risk Level</th>
+                <th className="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Score</th>
                 <th className="px-6 py-4 text-right text-[9px] font-black text-slate-400 uppercase tracking-widest">Operations</th>
               </tr>
             </thead>
@@ -116,8 +138,20 @@ export default function AdminBorrowers() {
                   <td className="px-6 py-4">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{b.nrc}</span>
                   </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${
+                      b.verificationStatus === 'verified'
+                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                        : 'bg-amber-50 text-amber-600 border border-amber-100'
+                    }`}>
+                      {b.verificationStatus === 'verified' ? 'Verified' : 'Unverified'}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 text-sm scale-90 origin-left">
                     <RiskBadge risk={b.risk} />
+                  </td>
+                  <td className="px-6 py-4 text-left">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{b.score || '--'} pts</span>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -153,7 +187,13 @@ export default function AdminBorrowers() {
               <p className="text-blue-400 text-[9px] font-black uppercase tracking-widest mt-1 opacity-80">NRC: {viewModal.nrc}</p>
               <div className="mt-5 flex gap-2">
                  <RiskBadge risk={viewModal.risk} />
-                 <div className="px-3 py-1.5 bg-white/5 rounded-full border border-white/5 text-[8px] font-bold uppercase tracking-widest">Status: Active</div>
+                 <div className={`px-3 py-1.5 rounded-full border text-[8px] font-bold uppercase tracking-widest ${
+                   viewModal.verificationStatus === 'verified'
+                     ? 'bg-emerald-500/20 border-emerald-500/20 text-emerald-400'
+                     : 'bg-amber-500/20 border-amber-500/20 text-amber-400'
+                 }`}>
+                   {viewModal.verificationStatus === 'verified' ? 'Verified' : 'Unverified'}
+                 </div>
               </div>
             </div>
 
@@ -190,33 +230,33 @@ export default function AdminBorrowers() {
                        </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                       {[].filter(l => l.borrowerId === viewModal.id).length === 0 ? (
+                       {viewLoans.length === 0 ? (
                           <tr><td colSpan="4" className="px-4 py-8 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">No loan records found</td></tr>
                        ) : (
-                          [].filter(l => l.borrowerId === viewModal.id).map((loan) => (
+                          viewLoans.map((loan) => (
                              <tr key={loan.id} className="hover:bg-slate-50/50 transition-colors">
                                 <td className="px-4 py-3">
                                    <div className="flex flex-col">
-                                      <span className="text-[11px] font-black text-slate-900 uppercase">{loan.id}</span>
+                                      <span className="text-[11px] font-black text-slate-900 uppercase">#{loan.id}</span>
                                       <span className="text-[9px] text-slate-500 font-bold uppercase">{loan.lenderName}</span>
                                    </div>
                                 </td>
                                 <td className="px-4 py-3">
                                    <div className="flex flex-col">
-                                      <span className="text-[11px] font-black text-slate-900">K{loan.amount}</span>
-                                      <span className="text-[9px] text-slate-400 font-bold uppercase">Rate: {loan.interestRate}%</span>
+                                      <span className="text-[11px] font-black text-slate-900">K{Number(loan.amount).toLocaleString()}</span>
+                                      <span className="text-[9px] text-slate-400 font-bold uppercase">Rate: {loan.interest_rate}%</span>
                                    </div>
                                 </td>
                                 <td className="px-4 py-3">
                                    <div className="flex flex-col">
-                                      <span className="text-[10px] font-bold text-slate-600 uppercase pb-0.5">{loan.instalments} Installments</span>
-                                      <span className="text-[9px] text-slate-400 font-bold uppercase">Due: {loan.dueDate}</span>
+                                      <span className="text-[10px] font-bold text-slate-600 uppercase pb-0.5">{(loan.instalmentSchedule || []).length} Installments</span>
+                                      <span className="text-[9px] text-slate-400 font-bold uppercase">Due: {THEME.formatDate(loan.due_date)}</span>
                                    </div>
                                 </td>
                                 <td className="px-4 py-3 text-center">
                                    <div className={`inline-block px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-widest ${
                                       loan.status === 'active' ? 'bg-blue-50 text-blue-600' :
-                                      loan.status === 'defaulted' ? 'bg-rose-50 text-rose-600' :
+                                      loan.status === 'default' ? 'bg-rose-50 text-rose-600' :
                                       'bg-emerald-50 text-emerald-600'
                                    }`}>
                                       {loan.status}
@@ -230,7 +270,25 @@ export default function AdminBorrowers() {
                </div>
             </div>
 
-            <button className="w-full py-4 bg-[#020617] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-md" onClick={() => setViewModal(null)}>Close</button>
+            <div className="flex gap-2.5">
+              {viewModal.verificationStatus !== 'verified' && (
+                <button
+                  className="flex-1 py-4 bg-emerald-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-md active:scale-95"
+                  onClick={async () => {
+                    try {
+                      await api.post('/admin/approve-borrower', { borrowerId: viewModal.id });
+                      fetchBorrowers();
+                      setViewModal({ ...viewModal, verificationStatus: 'verified' });
+                    } catch (error) {
+                      console.error('Failed to verify borrower', error);
+                    }
+                  }}
+                >
+                  Verify Borrower
+                </button>
+              )}
+              <button className="flex-1 py-4 bg-[#020617] text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-md" onClick={() => setViewModal(null)}>Close</button>
+            </div>
           </div>
         )}
       </Modal>

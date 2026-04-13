@@ -11,10 +11,13 @@ import {
    ShieldCheck,
    ChevronRight,
    AlertTriangle,
-   Zap
+   Zap,
+   Upload,
+   Camera
 } from 'lucide-react';
 import { PageHeader, StatusBadge } from '../../components/UI';
 import Modal from '../../components/Modal';
+import { THEME } from '../../theme';
 
 export default function LenderLoans() {
    const [loans, setLoans] = useState([]);
@@ -24,7 +27,10 @@ export default function LenderLoans() {
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [viewModal, setViewModal] = useState(null);
    const [isAddingBorrower, setIsAddingBorrower] = useState(false);
+   const [collateralEnabled, setCollateralEnabled] = useState(true);
+   const [collateralFiles, setCollateralFiles] = useState([]);
    const [newBorrower, setNewBorrower] = useState({ name: '', phone: '', nrc: '' });
+   const [borrowerNrcFile, setBorrowerNrcFile] = useState(null);
    const [newLoan, setNewLoan] = useState({
       borrowerId: '',
       amount: '',
@@ -54,10 +60,20 @@ export default function LenderLoans() {
       }
    };
 
+   const fetchSettings = async () => {
+      try {
+         const { data } = await api.get('/settings');
+         const collateralSetting = data.find(s => s.setting_key === 'collateral_upload_enabled');
+         setCollateralEnabled(collateralSetting?.setting_value === 'true' || collateralSetting?.setting_value === '1');
+      } catch (error) {
+         console.error('Failed to fetch settings', error);
+      }
+   };
+
    useEffect(() => {
       const loadData = async () => {
          setLoading(true);
-         await Promise.all([fetchLoans(), fetchBorrowers()]);
+         await Promise.all([fetchLoans(), fetchBorrowers(), fetchSettings()]);
          setLoading(false);
       };
       loadData();
@@ -85,8 +101,21 @@ export default function LenderLoans() {
             dueDate: new Date(Date.now() + Number(newLoan.instalments) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
          };
 
-         await api.post('/loans', data);
+         const response = await api.post('/loans', data);
+         
+         // If Collateral type and files selected, upload them
+         if (newLoan.loanType === 'Collateral' && collateralEnabled && collateralFiles.length > 0) {
+            const formData = new FormData();
+            collateralFiles.forEach(file => formData.append('files', file));
+            formData.append('description', newLoan.collateral || 'Collateral Documents');
+
+            await api.post(`/loans/${response.data.loanId}/collateral`, formData, {
+               headers: { 'Content-Type': 'multipart/form-data' }
+            });
+         }
+
          setIsModalOpen(false);
+         setCollateralFiles([]); // Clear
          fetchLoans();
       } catch (error) {
          console.error('Error creating loan', error);
@@ -96,14 +125,23 @@ export default function LenderLoans() {
 
    const handleAddBorrower = async () => {
       if (!newBorrower.name || !newBorrower.phone || !newBorrower.nrc) return;
-      
+
       try {
-         const { data } = await api.post('/borrowers', newBorrower);
+         const formData = new FormData();
+         formData.append('name', newBorrower.name);
+         formData.append('nrc', newBorrower.nrc);
+         formData.append('phone', newBorrower.phone);
+         if (borrowerNrcFile) formData.append('nrc_document', borrowerNrcFile);
+
+         const { data } = await api.post('/borrowers', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+         });
          const { borrowerId } = data;
          await fetchBorrowers();
          setNewLoan({ ...newLoan, borrowerId });
          setIsAddingBorrower(false);
          setNewBorrower({ name: '', phone: '', nrc: '' });
+         setBorrowerNrcFile(null);
          alert('Borrower added successfully!');
       } catch (error) {
          console.error('Error adding borrower', error);
@@ -141,6 +179,22 @@ export default function LenderLoans() {
       }
    };
 
+   const handleReversePayment = async (loanId, installmentId) => {
+      if (!window.confirm("Are you sure you want to REVERSE this payment? This will mark the instalment as UNPAID.")) return;
+      
+      try {
+         await api.post(`/loans/${loanId}/reverse-payment`, {
+            installmentId
+         });
+         alert('Payment reversed successfully! 🔄');
+         await fetchLoans();
+         setViewModal(null);
+      } catch (error) {
+         console.error('Failed to reverse payment', error);
+         alert(error.response?.data?.message || 'Failed to reverse payment');
+      }
+   };
+
    return (
       <div className="space-y-8 pb-10">
          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -150,7 +204,7 @@ export default function LenderLoans() {
             />
             <button
                onClick={() => setIsModalOpen(true)}
-               className="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold text-xs hover:bg-blue-700 transition-colors flex items-center gap-2"
+               className="bg-red-600 text-white px-6 py-3 rounded-2xl font-bold text-xs hover:bg-red-700 transition-colors flex items-center gap-2"
             >
                <Plus size={16} /> Give A Loan
             </button>
@@ -163,7 +217,7 @@ export default function LenderLoans() {
                </div>
                <div>
                   <p className="text-xs text-gray-500 font-medium">Total Lent</p>
-                  <h3 className="text-xl font-bold text-gray-900 leading-none mt-1">K{loans.reduce((s, l) => s + l.amount, 0).toLocaleString()}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 leading-none mt-1">K{loans.reduce((s, l) => s + Number(l.amount || 0), 0).toLocaleString()}</h3>
                </div>
             </div>
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-5">
@@ -250,8 +304,16 @@ export default function LenderLoans() {
                            <input type="text" placeholder="Full Name" value={newBorrower.name} onChange={e => setNewBorrower({...newBorrower, name: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500" />
                            <input type="text" placeholder="NRC Number" value={newBorrower.nrc} onChange={e => setNewBorrower({...newBorrower, nrc: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500" />
                            <input type="text" placeholder="Phone Number" value={newBorrower.phone} onChange={e => setNewBorrower({...newBorrower, phone: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500" />
+                           <label className="flex items-center gap-2 w-full px-3 py-2.5 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all">
+                              <Upload size={16} className="text-gray-400 flex-shrink-0" />
+                              <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest truncate">
+                                 {borrowerNrcFile ? borrowerNrcFile.name : 'Upload NRC Photo / Document'}
+                              </span>
+                              <input type="file" accept="image/*,.pdf" capture="environment" className="hidden" onChange={e => setBorrowerNrcFile(e.target.files[0])} />
+                              {borrowerNrcFile && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse flex-shrink-0" />}
+                           </label>
                            <div className="flex gap-2 pt-1">
-                              <button onClick={(e) => { e.preventDefault(); handleAddBorrower(); }} className="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-blue-700">Save Borrower</button>
+                              <button onClick={(e) => { e.preventDefault(); handleAddBorrower(); }} className="flex-1 bg-red-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-red-700">Save Borrower</button>
                               <button onClick={(e) => { e.preventDefault(); setIsAddingBorrower(false); }} className="px-3 bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded-lg hover:bg-gray-300">Cancel</button>
                            </div>
                         </div>
@@ -342,10 +404,25 @@ export default function LenderLoans() {
                               onChange={e => setNewLoan({ ...newLoan, collateral: e.target.value })}
                            />
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                           <button className="py-3 bg-white border-2 border-dashed border-blue-200 rounded-xl text-[9px] font-black text-blue-600 uppercase hover:bg-blue-600 hover:text-white transition-all">Upload Agreement</button>
-                           <button className="py-3 bg-white border-2 border-dashed border-blue-200 rounded-xl text-[9px] font-black text-blue-600 uppercase hover:bg-blue-600 hover:text-white transition-all">Upload Photos</button>
-                        </div>
+                        {collateralEnabled && (
+                           <div className="space-y-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                 <label className="cursor-pointer py-3 bg-white border-2 border-dashed border-blue-200 rounded-xl text-[9px] font-black text-blue-600 uppercase hover:bg-blue-600 hover:text-white transition-all text-center block">
+                                    Upload Agreement
+                                    <input type="file" className="hidden" accept=".pdf,.doc,.docx,image/*" onChange={(e) => setCollateralFiles(prev => [...prev, ...e.target.files])} />
+                                 </label>
+                                 <label className="cursor-pointer py-3 bg-white border-2 border-dashed border-blue-200 rounded-xl text-[9px] font-black text-blue-600 uppercase hover:bg-blue-600 hover:text-white transition-all text-center block">
+                                    Upload Photos
+                                    <input type="file" className="hidden" multiple accept="image/*" onChange={(e) => setCollateralFiles(prev => [...prev, ...e.target.files])} />
+                                 </label>
+                              </div>
+                              {collateralFiles.length > 0 && (
+                                 <div className="text-[10px] font-bold text-blue-800 text-center uppercase tracking-widest bg-blue-100 py-1.5 rounded-lg border border-blue-200">
+                                    {collateralFiles.length} file(s) selected
+                                 </div>
+                              )}
+                           </div>
+                        )}
                      </div>
                   )}
 
@@ -377,7 +454,7 @@ export default function LenderLoans() {
                <div className="flex gap-4 pt-2">
                   <button
                      onClick={handleAdd}
-                     className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-xs font-bold hover:bg-blue-700 transition-all active:scale-95"
+                     className="flex-1 py-4 bg-red-600 text-white rounded-2xl text-xs font-bold hover:bg-red-700 transition-all active:scale-95"
                   >
                      Confirm Loan
                   </button>
@@ -390,7 +467,7 @@ export default function LenderLoans() {
          <Modal isOpen={!!viewModal} onClose={() => setViewModal(null)} title="Loan Ledger" size="lg">
             {viewModal && (() => {
                const schedule = viewModal.instalmentSchedule || [];
-               const totalRecovered = schedule.reduce((s, i) => i.status === 'paid' ? s + i.amount : s, 0);
+               const totalRecovered = schedule.reduce((s, i) => i.status === 'paid' ? s + Number(i.amount || 0) : s, 0);
                const remaining = viewModal.amount - totalRecovered;
 
                return (
@@ -441,7 +518,7 @@ export default function LenderLoans() {
                                              </span>
                                           </td>
                                           <td className="px-4 py-4">
-                                             <p className={`text-sm font-black italic tracking-tighter ${isOverdue ? 'text-red-900' : 'text-slate-950'}`}>K{ins.amount.toLocaleString()}</p>
+                                             <p className={`text-sm font-black italic tracking-tighter ${isOverdue ? 'text-red-900' : 'text-slate-950'}`}>K{Number(ins.amount).toLocaleString()}</p>
                                           </td>
                                           <td className="px-4 py-4 text-center">
                                              {ins.status === 'pending' ? (
@@ -455,12 +532,22 @@ export default function LenderLoans() {
                                                    {isOverdue && <span className="text-[7px] font-black text-red-500 uppercase tracking-tighter animate-pulse">Missed</span>}
                                                 </div>
                                              ) : (
-                                                <StatusBadge status={ins.status} />
+                                                <div className="flex flex-col items-center gap-1">
+                                                   <StatusBadge status={ins.status} />
+                                                   {ins.status === 'paid' && (
+                                                      <button 
+                                                         onClick={(e) => { e.stopPropagation(); handleReversePayment(viewModal.id, ins.id); }}
+                                                         className="text-[7px] font-black text-red-500 uppercase tracking-widest hover:text-red-700 transition-colors mt-0.5"
+                                                      >
+                                                         (Revert)
+                                                      </button>
+                                                   )}
+                                                </div>
                                              )}
                                           </td>
                                           <td className="px-4 py-4 text-right">
                                              <p className={`text-[10px] font-bold uppercase tracking-tight ${isOverdue ? 'text-red-600' : 'text-slate-500'}`}>
-                                                {ins.status === 'paid' ? (ins.paidDate || ins.paid_at) : (ins.dueDate || ins.due_date)}
+                                                {ins.status === 'paid' ? THEME.formatDate(ins.paidDate || ins.paid_at) : THEME.formatDate(ins.dueDate || ins.due_date)}
                                              </p>
                                              {isOverdue && (
                                                 <p className="text-[8px] font-black text-red-400 uppercase tracking-widest mt-0.5 animate-pulse">OVERDUE</p>

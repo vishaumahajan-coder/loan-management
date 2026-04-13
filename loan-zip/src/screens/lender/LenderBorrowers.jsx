@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { 
-  UserPlus, 
-  Search, 
-  Eye, 
-  Edit2, 
-  Trash2, 
-  Send, 
-  ChevronRight, 
-  AlertTriangle, 
-  Shield, 
-  Zap, 
-  Phone, 
-  Calendar, 
+import {
+  UserPlus,
+  Search,
+  Eye,
+  Edit2,
+  Trash2,
+  Send,
+  ChevronRight,
+  AlertTriangle,
+  Shield,
+  Zap,
+  Phone,
+  Calendar,
   Activity,
   Layers,
-  Lock
+  Lock,
+  Upload,
+  Camera
 } from 'lucide-react';
 import { RiskBadge, Btn, PageHeader, EmptyState, ConfirmDialog } from '../../components/UI';
 import Modal from '../../components/Modal';
@@ -39,6 +41,8 @@ export default function LenderBorrowers() {
   const [form, setForm]               = useState(EMPTY_FORM);
   const [errors, setErrors]           = useState({});
   const [toastMsg, setToastMsg]       = useState('');
+  const [photoFile, setPhotoFile]     = useState(null);
+  const [nrcFile, setNrcFile]         = useState(null);
   const { user } = useAuth();
   const isFree = user?.role === 'lender' && user?.status === 'pending';
 
@@ -98,16 +102,28 @@ export default function LenderBorrowers() {
     return e;
   };
 
-  const openAdd = () => { setForm(EMPTY_FORM); setErrors({}); setAddModal(true); };
+  const openAdd = () => { setForm(EMPTY_FORM); setErrors({}); setPhotoFile(null); setNrcFile(null); setAddModal(true); };
   const openEdit = (b) => { setForm({ name: b.name, nrc: b.nrc, phone: b.phone, dob: b.dob }); setErrors({}); setEditModal(b); };
 
   const handleAdd = async () => {
     const e = validate(form);
     if (Object.keys(e).length) { setErrors(e); return; }
-    
+
     try {
-      await api.post('/borrowers', form);
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('nrc', form.nrc);
+      formData.append('phone', form.phone);
+      if (form.dob) formData.append('dob', form.dob);
+      if (photoFile) formData.append('photo', photoFile);
+      if (nrcFile) formData.append('nrc_document', nrcFile);
+
+      await api.post('/borrowers', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setAddModal(false);
+      setPhotoFile(null);
+      setNrcFile(null);
       showToast(`${form.name} processed successfully.`);
       fetchBorrowers();
     } catch (error) {
@@ -156,7 +172,7 @@ export default function LenderBorrowers() {
         <PageHeader title="Borrower Info" subtitle="Add and manage all people you have lent money to" />
         <button 
           onClick={openAdd}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all flex items-center gap-2"
+          className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-bold text-xs shadow-lg active:scale-95 transition-all flex items-center gap-2"
         >
           <UserPlus size={16} /> Add Person
         </button>
@@ -231,7 +247,10 @@ export default function LenderBorrowers() {
                      <span className="text-[8px] font-black uppercase tracking-widest">Premium</span>
                   </div>
                 ) : (
-                  <RiskBadge risk={b.risk} />
+                  <div className="flex flex-col items-end gap-1">
+                    <RiskBadge risk={b.risk} />
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter leading-none">{b.score || '--'} pts</span>
+                  </div>
                 )}
              </div>
 
@@ -394,6 +413,32 @@ export default function LenderBorrowers() {
                   <div className="space-y-1">
                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Date of Birth</label>
                      <input type="date" className="w-full px-4 py-2.5 border border-gray-100 bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={form.dob} onChange={e=>setForm({...form, dob: e.target.value})} />
+                  </div>
+               </div>
+
+               {/* Photo & NRC Upload */}
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                  <div className="space-y-1">
+                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Borrower Photo</label>
+                     <label className="flex flex-col items-center justify-center gap-1.5 w-full py-4 bg-white border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all">
+                        <Camera size={20} className="text-gray-400" />
+                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">
+                           {photoFile ? photoFile.name : 'Take / Upload Photo'}
+                        </span>
+                        <input type="file" accept="image/*" capture="environment" className="hidden" onChange={e => setPhotoFile(e.target.files[0])} />
+                        {photoFile && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
+                     </label>
+                  </div>
+                  <div className="space-y-1">
+                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">NRC Document</label>
+                     <label className="flex flex-col items-center justify-center gap-1.5 w-full py-4 bg-white border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all">
+                        <Upload size={20} className="text-gray-400" />
+                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">
+                           {nrcFile ? nrcFile.name : 'Upload NRC Copy'}
+                        </span>
+                        <input type="file" accept="image/*,.pdf" capture="environment" className="hidden" onChange={e => setNrcFile(e.target.files[0])} />
+                        {nrcFile && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
+                     </label>
                   </div>
                </div>
             </div>

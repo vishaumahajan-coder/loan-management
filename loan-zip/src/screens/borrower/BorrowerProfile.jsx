@@ -36,7 +36,7 @@ export default function BorrowerProfile() {
     totalDefaults: riskData.defaultedLoans,
     activeDefaults: riskData.defaultedLoans,
     nrc: user?.nrc,
-    dob: riskData.profile?.dob ? new Date(riskData.profile.dob).toLocaleDateString() : '—'
+    dob: riskData.profile?.dob ? THEME.formatDate(riskData.profile.dob) : '—'
   } : null;
   const [toastMsg, setToastMsg] = useState('');
   const [editModal, setEditModal] = useState(false);

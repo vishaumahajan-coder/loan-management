@@ -39,7 +39,7 @@ export default function AdminDashboard() {
   }, []);
 
   const metrics = [
-    { label: 'Total Capital', value: `K${(stats.totalCapital / 1000000).toFixed(1)}M`, icon: Globe, color: 'text-blue-400' },
+    { label: 'Total Capital', value: `K${stats.totalCapital.toLocaleString()}`, icon: Globe, color: 'text-blue-400' },
     { label: 'Total Lenders', value: stats.totalLenders, icon: UserCheck, color: 'text-emerald-400' },
     { label: 'Free Plan Users', value: stats.freeLenders, icon: Lock, color: 'text-yellow-400' },
     { label: 'Premium Users', value: stats.premiumLenders, icon: BarChart3, color: 'text-indigo-400' },
@@ -126,7 +126,15 @@ export default function AdminDashboard() {
                        <p className="text-[8px] text-slate-400 font-bold uppercase mt-0.5">Enable platform wide</p>
                     </div>
                     <div 
-                      onClick={() => setCollateralEnabled(!collateralEnabled)}
+                      onClick={async () => {
+                        const newVal = !collateralEnabled;
+                        setCollateralEnabled(newVal);
+                        try {
+                           await api.post('/settings/update', { key: 'collateral_upload_enabled', value: newVal });
+                        } catch (e) {
+                           setCollateralEnabled(!newVal);
+                        }
+                      }}
                       className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors duration-300 ${collateralEnabled ? 'bg-blue-600' : 'bg-gray-300'}`}
                     >
                        <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${collateralEnabled ? 'right-1' : 'left-1'}`}></div>

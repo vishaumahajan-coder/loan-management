@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 // Base API Configuration
+// const API_BASE_URL = 'http://localhost:5000/api';
 const API_BASE_URL = 'https://lendanet-loan-production.up.railway.app/api';
 
 const api = axios.create({

@@ -22,6 +22,7 @@ import api from '../../services/api';
 import { AlertTriangle } from 'lucide-react';
 import { PageHeader, StatusBadge } from '../../components/UI';
 import Modal from '../../components/Modal';
+import { THEME } from '../../theme';
 
 export default function AdminLoans() {
   const [loans, setLoans] = useState([]);
@@ -106,7 +107,7 @@ export default function AdminLoans() {
     l.lenderName.toLowerCase().includes(search.toLowerCase())
   );
 
-   const totalValue = loans.reduce((s, l) => s + l.amount, 0);
+   const totalValue = loans.reduce((s, l) => s + (Number(l.amount) || 0), 0);
 
    const handleMarkDefault = async (loanId) => {
       if (!window.confirm("ARE YOU SURE? Marking a loan as default will flag the borrower as RISKY across the entire system.")) return;
@@ -233,7 +234,7 @@ export default function AdminLoans() {
 
               <div className="flex items-center gap-8">
                  <div className="text-right hidden sm:block">
-                    <p className="text-lg font-black text-slate-950 tracking-tight leading-none grayscale group-hover:grayscale-0 transition-all mb-1">K{l.amount.toLocaleString()}</p>
+                    <p className="text-lg font-black text-slate-950 tracking-tight leading-none grayscale group-hover:grayscale-0 transition-all mb-1">K{Number(l.amount).toLocaleString()}</p>
                     <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-none opacity-80">Loan Amount</p>
                  </div>
                  <div className="flex items-center gap-5">
@@ -282,7 +283,7 @@ export default function AdminLoans() {
                             </div>
                             <div>
                               <p className={`text-sm font-black tracking-tight leading-none transition-colors uppercase ${isOverdue ? 'text-red-900 font-black italic' : 'text-slate-950 group-hover/item:text-blue-600'}`}>K{ins.amount}</p>
-                              <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isOverdue ? 'text-red-400' : 'text-slate-400'}`}>Due Date: {ins.dueDate || ins.due_date}</p>
+                              <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isOverdue ? 'text-red-400' : 'text-slate-400'}`}>Due Date: {THEME.formatDate(ins.dueDate || ins.due_date)}</p>
                             </div>
                          </div>
                          <div className="flex flex-col items-end gap-1">

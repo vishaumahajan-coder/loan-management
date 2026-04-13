@@ -25,6 +25,7 @@ import {
 import api from '../../services/api';
 import { StatusBadge, Btn, PageHeader, RiskBadge } from '../../components/UI';
 import Modal from '../../components/Modal';
+import { THEME } from '../../theme';
 
 export default function AdminDefaults() {
   const [loans, setLoans] = useState([]);
@@ -141,7 +142,7 @@ export default function AdminDefaults() {
                  <div>
                     <h4 className="text-base font-black text-slate-950 uppercase group-hover:text-rose-600 transition-colors tracking-tight leading-none mb-1.5">{l.borrowerName}</h4>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-[9px] font-black text-slate-300 uppercase tracking-widest mt-1 opacity-80 items-center">
-                       <span className="flex items-center gap-1.5 text-rose-600"><Hash size={10} /> OVERDUE SINCE {new Date(l.dueDate).toLocaleDateString()}</span>
+                       <span className="flex items-center gap-1.5 text-rose-600"><Hash size={10} /> OVERDUE SINCE {THEME.formatDate(l.dueDate)}</span>
                        <span className="w-1 h-1 rounded-full bg-slate-200"></span>
                        <span>LENDER: {l.lenderName}</span>
                     </div>

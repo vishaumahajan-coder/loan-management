@@ -19,7 +19,7 @@ import {
 // import { mockLoans } from '../../data/mockData';
 import { PageHeader, StatusBadge } from '../../components/UI';
 import Modal from '../../components/Modal';
-
+import { THEME } from '../../theme';
 import api from '../../services/api';
 
 export default function BorrowerLoans() {
@@ -140,17 +140,36 @@ export default function BorrowerLoans() {
                 <StatusBadge status={loan.status} />
               </div>
 
-              <div className="flex items-end justify-between pt-5 border-t border-gray-50 relative z-10">
-                <div>
-                  <p className="text-lg font-black text-slate-950 tracking-tighter leading-none mb-1 grayscale group-hover:grayscale-0 transition-all">K{loan.amount.toLocaleString()}</p>
-                  <p className="text-[8px] text-slate-400 font-black uppercase tracking-widest leading-none opacity-80">{loan.type}</p>
-                </div>
-                <div className="text-right flex items-center gap-4">
-                  <div className="px-3 py-1.5 bg-gray-50 rounded-full text-[8px] font-black text-slate-500 uppercase tracking-widest group-hover:bg-blue-600 group-hover:text-white transition-all">
-                    {loan.status === 'paid' ? 'Settled' : `${new Date(loan.due_date).toLocaleDateString()}`}
-                  </div>
-                  <ChevronRight size={16} className="text-slate-200 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
-                </div>
+              <div className="flex items-center justify-between pt-4 border-t border-gray-50 relative z-10 gap-2">
+                {/* Next Payment Due */}
+                {(() => {
+                  const schedule = loan.instalmentSchedule || [];
+                  const nextDue = schedule.find(i => i.status === 'pending');
+                  const paidCount = schedule.filter(i => i.status === 'paid').length;
+                  return (
+                    <>
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center flex-shrink-0">
+                          <Calendar size={14} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[7px] text-slate-400 font-bold uppercase tracking-widest leading-none">Next Payment Due</p>
+                          <p className="text-[11px] font-black text-slate-800 leading-tight mt-0.5">
+                            {nextDue ? THEME.formatDate(nextDue.due_date) : 'All Paid'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-center px-2">
+                        <p className="text-sm font-black text-green-700 leading-none">K{nextDue ? nextDue.amount.toLocaleString() : '0'}</p>
+                        <p className="text-[7px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Amount Due</p>
+                      </div>
+                      <div className="px-3 py-2 bg-[#020617] rounded-xl text-center min-w-[60px]">
+                        <p className="text-sm font-black text-white leading-none">{paidCount}/{schedule.length}</p>
+                        <p className="text-[7px] text-blue-400 font-bold uppercase tracking-widest mt-1">Payments Paid</p>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           ))}
@@ -177,6 +196,41 @@ export default function BorrowerLoans() {
                   </div>
                 </div>
               </div>
+
+              {/* Next Payment Due Summary */}
+              {(() => {
+                const schedule = viewModal.instalmentSchedule || [];
+                const nextDue = schedule.find(i => i.status === 'pending' || i.status === 'missed');
+                const paidCount = schedule.filter(i => i.status === 'paid').length;
+                const isOverdue = nextDue && new Date(nextDue.due_date) < new Date();
+                return (
+                  <div className="flex items-center gap-3">
+                    <div className={`flex-1 p-3 rounded-2xl border flex items-center gap-3 ${isOverdue ? 'bg-red-50 border-red-100' : 'bg-amber-50 border-amber-100'}`}>
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${isOverdue ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
+                        <Calendar size={16} />
+                      </div>
+                      <div>
+                        <p className={`text-[8px] font-black uppercase tracking-widest ${isOverdue ? 'text-red-500' : 'text-amber-600'}`}>
+                          {isOverdue ? 'Payment Overdue!' : 'Next Payment Due'}
+                        </p>
+                        <p className="text-xs font-black text-slate-900 mt-0.5">
+                          {nextDue ? THEME.formatDate(nextDue.due_date) : 'All Paid'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="text-center">
+                        <p className="text-lg font-black text-green-700 leading-none">K{nextDue ? Number(nextDue.amount).toLocaleString() : '0'}</p>
+                        <p className="text-[7px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Amount Due</p>
+                      </div>
+                    </div>
+                    <div className="px-3 py-2.5 bg-[#020617] rounded-xl text-center min-w-[60px]">
+                      <p className="text-base font-black text-white leading-none">{paidCount}/{schedule.length}</p>
+                      <p className="text-[7px] text-blue-400 font-bold uppercase tracking-widest mt-1">Payments Paid</p>
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="space-y-4">
                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 px-1">Repayment Schedule</h4>
@@ -217,7 +271,7 @@ export default function BorrowerLoans() {
                                    </td>
                                    <td className="px-4 py-4 text-right">
                                       <p className={`text-[10px] font-bold uppercase tracking-tight ${isMissed ? 'text-red-600' : 'text-slate-500'}`}>
-                                         {ins.status === 'paid' ? new Date(ins.paid_at).toLocaleDateString() : new Date(ins.due_date).toLocaleDateString()}
+                                         {ins.status === 'paid' ? THEME.formatDate(ins.paid_at) : THEME.formatDate(ins.due_date)}
                                       </p>
                                       {isMissed && (
                                          <p className="text-[8px] font-black text-red-400 uppercase tracking-widest mt-0.5 animate-pulse">Action Due</p>

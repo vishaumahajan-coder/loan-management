@@ -84,7 +84,7 @@ export default function LenderDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-1">
         {[
-          { label: 'Total Portfolio', value: `K${(stats.totalPortfolio/1000).toFixed(1)}k`, icon: Globe, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Total Portfolio', value: `K${Number(stats.totalPortfolio).toLocaleString()}`, icon: Globe, color: 'text-blue-600', bg: 'bg-blue-50' },
           { label: 'Active Loans', value: stats.activeLoans, icon: ActivityIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
           { label: 'Defaulted', value: stats.defaultedLoans, icon: AlertTriangle, color: 'text-rose-600', bg: 'bg-rose-50' },
           { label: 'Status', value: 'Healthy', icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
