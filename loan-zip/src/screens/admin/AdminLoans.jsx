@@ -38,6 +38,9 @@ export default function AdminLoans() {
      instalments: 3,
      loanType: 'Non-collateral'
   });
+  const [borrowerOptions, setBorrowerOptions] = useState([]);
+  const [lenderOptions, setLenderOptions] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchLoans = async () => {
     try {
@@ -51,54 +54,55 @@ export default function AdminLoans() {
     }
   };
 
+  const fetchOptions = async () => {
+    try {
+      const [bResp, lResp] = await Promise.all([
+        api.get('/admin/borrowers'),
+        api.get('/admin/lenders')
+      ]);
+      setBorrowerOptions(bResp.data);
+      setLenderOptions(lResp.data);
+    } catch (error) {
+      console.error('Failed to fetch lenders/borrowers', error);
+    }
+  };
+
   useEffect(() => {
     fetchLoans();
+    fetchOptions();
   }, []);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
      if (!newLoan.borrowerId || !newLoan.lenderId || !newLoan.amount) {
         alert("Please fill in all required fields (Borrower, Lender, Amount).");
         return;
      }
-     
-     const borrower = [].find(b => b.id === newLoan.borrowerId);
-     const lender = [].find(l => l.id === newLoan.lenderId);
 
-     const principal = Number(newLoan.amount);
-     const interest = Number(newLoan.interestRate) || 0;
-     const totalAmount = principal + (principal * interest / 100);
-     const count = Number(newLoan.instalments);
-     const instAmount = Math.ceil(totalAmount / count);
+     try {
+        setIsSubmitting(true);
+        const payload = {
+           borrowerId: newLoan.borrowerId,
+           lenderId: newLoan.lenderId,
+           amount: Number(newLoan.amount),
+           interestRate: Number(newLoan.interestRate) || 0,
+           installmentsCount: Number(newLoan.instalments),
+           type: newLoan.loanType === 'Non-collateral' ? 'Non' : (newLoan.loanType === 'Guaranteed' ? 'Guarantor' : 'Collateral'),
+           issueDate: new Date().toISOString().split('T')[0],
+           dueDate: new Date(Date.now() + Number(newLoan.instalments) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        };
 
-     const schedule = Array.from({ length: count }, (_, i) => ({
-        id: i + 1,
-        amount: instAmount,
-        dueDate: new Date(Date.now() + (i + 1) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        status: 'pending',
-        remainingBalance: totalAmount - (instAmount * i)
-     }));
-
-     const loan = {
-        id: `L${Date.now().toString().slice(-4)}`,
-        borrowerId: newLoan.borrowerId,
-        borrowerName: borrower?.name || 'Unknown',
-        lenderId: newLoan.lenderId,
-        lenderName: lender?.name || 'Unknown',
-        principal: principal,
-        interestRate: interest,
-        amount: totalAmount,
-        issueDate: new Date().toISOString().split('T')[0],
-        dueDate: schedule[count - 1].dueDate,
-        instalments: count,
-        status: 'active',
-        loanType: newLoan.loanType,
-        instalmentSchedule: schedule
-     };
-
-     setLoans([loan, ...loans]);
-     setIsModalOpen(false);
-     setNewLoan({ borrowerId: '', lenderId: '', amount: '', interestRate: '', instalments: 3, loanType: 'Non-collateral' });
-     alert("Loan Successfully Created!");
+        await api.post('/admin/loans', payload);
+        
+        alert("Loan Successfully Created! 🚀");
+        setIsModalOpen(false);
+        setNewLoan({ borrowerId: '', lenderId: '', amount: '', interestRate: '', instalments: 3, loanType: 'Non-collateral' });
+        fetchLoans();
+     } catch (error) {
+        console.error('Failed to create loan', error);
+        alert(error.response?.data?.message || 'Failed to create loan');
+     } finally {
+        setIsSubmitting(false);
+     }
   };
 
   const filtered = loans.filter(l => 
@@ -322,8 +326,8 @@ export default function AdminLoans() {
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                      >
                         <option value="">Select Lender...</option>
-                        {[].map(l => (
-                           <option key={l.id} value={l.id}>{l.name} ({l.businessName || 'N/A'})</option>
+                        {lenderOptions.map(l => (
+                           <option key={l.id} value={l.id}>{l.name} ({l.businessName || 'Individual'})</option>
                         ))}
                      </select>
                   </div>
@@ -335,8 +339,8 @@ export default function AdminLoans() {
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                      >
                         <option value="">Select Borrower...</option>
-                        {[].map(b => (
-                           <option key={b.id} value={b.id}>{b.name} ({b.nrc})</option>
+                        {borrowerOptions.map(b => (
+                           <option key={b.id} value={b.id}>{b.name} ({b.nrc || 'No NRC'})</option>
                         ))}
                      </select>
                   </div>
@@ -410,7 +414,13 @@ export default function AdminLoans() {
             </div>
 
             <div className="flex gap-4 pt-2">
-               <button onClick={handleAdd} className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-xs font-bold hover:bg-blue-700 transition-all active:scale-95">Confirm Loan</button>
+                <button 
+                  onClick={handleAdd} 
+                  disabled={isSubmitting}
+                  className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-xs font-bold hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Processing...' : 'Confirm Loan'}
+                </button>
                <button onClick={() => setIsModalOpen(false)} className="flex-1 py-4 bg-gray-50 text-gray-400 rounded-2xl text-xs font-bold hover:bg-gray-100 transition-all">Cancel</button>
             </div>
          </div>

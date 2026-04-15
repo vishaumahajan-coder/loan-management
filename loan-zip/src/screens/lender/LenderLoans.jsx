@@ -29,7 +29,7 @@ export default function LenderLoans() {
    const [isAddingBorrower, setIsAddingBorrower] = useState(false);
    const [collateralEnabled, setCollateralEnabled] = useState(true);
    const [collateralFiles, setCollateralFiles] = useState([]);
-   const [newBorrower, setNewBorrower] = useState({ name: '', phone: '', nrc: '' });
+   const [newBorrower, setNewBorrower] = useState({ name: '', phone: '', nrc: '', dob: '' });
    const [borrowerNrcFile, setBorrowerNrcFile] = useState(null);
    const [newLoan, setNewLoan] = useState({
       borrowerId: '',
@@ -131,6 +131,7 @@ export default function LenderLoans() {
          formData.append('name', newBorrower.name);
          formData.append('nrc', newBorrower.nrc);
          formData.append('phone', newBorrower.phone);
+         if (newBorrower.dob) formData.append('dob', newBorrower.dob);
          if (borrowerNrcFile) formData.append('nrc_document', borrowerNrcFile);
 
          const { data } = await api.post('/borrowers', formData, {
@@ -140,7 +141,7 @@ export default function LenderLoans() {
          await fetchBorrowers();
          setNewLoan({ ...newLoan, borrowerId });
          setIsAddingBorrower(false);
-         setNewBorrower({ name: '', phone: '', nrc: '' });
+         setNewBorrower({ name: '', phone: '', nrc: '', dob: '' });
          setBorrowerNrcFile(null);
          alert('Borrower added successfully!');
       } catch (error) {
@@ -304,6 +305,10 @@ export default function LenderLoans() {
                            <input type="text" placeholder="Full Name" value={newBorrower.name} onChange={e => setNewBorrower({...newBorrower, name: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500" />
                            <input type="text" placeholder="NRC Number" value={newBorrower.nrc} onChange={e => setNewBorrower({...newBorrower, nrc: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500" />
                            <input type="text" placeholder="Phone Number" value={newBorrower.phone} onChange={e => setNewBorrower({...newBorrower, phone: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500" />
+                           <div className="space-y-1">
+                              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Date of Birth</label>
+                              <input type="date" value={newBorrower.dob} onChange={e => setNewBorrower({...newBorrower, dob: e.target.value})} className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500" />
+                           </div>
                            <label className="flex items-center gap-2 w-full px-3 py-2.5 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all">
                               <Upload size={16} className="text-gray-400 flex-shrink-0" />
                               <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest truncate">

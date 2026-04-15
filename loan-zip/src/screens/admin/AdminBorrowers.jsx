@@ -132,7 +132,10 @@ export default function AdminBorrowers() {
                       <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-white transition-all shadow-sm">
                         <User size={18} />
                       </div>
-                      <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight">{b.name}</span>
+                      <div className="flex flex-col">
+                        <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight">{b.name}</span>
+                        <span className="text-[9px] font-bold text-blue-600 uppercase tracking-widest mt-0.5">Born: {THEME.formatDate(THEME.getDOB(b))}</span>
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -200,7 +203,7 @@ export default function AdminBorrowers() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
                {[
                  { icon: Phone, label: 'Phone', value: viewModal.phone, color: 'text-blue-500' },
-                 { icon: Calendar, label: 'Birthday', value: viewModal.dob, color: 'text-emerald-500' },
+                 { icon: Calendar, label: 'Date of Birth', value: THEME.formatDate(THEME.getDOB(viewModal)), color: 'text-emerald-500' },
                  { icon: MapPin, label: 'Location', value: 'Lusaka', color: 'text-indigo-500' },
                  { icon: Activity, label: 'Loans', value: `${viewModal.totalLoans} Paid`, color: 'text-amber-500' },
                ].map((item, i) => (

@@ -6,63 +6,63 @@
 export const THEME = {
   // Brand colors (use CSS-compatible values)
   brand: {
-    primary:        '#1e40af',   // deep blue
-    primaryHover:   '#1d4ed8',
-    primaryLight:   '#dbeafe',
-    primaryDark:    '#1e3a8a',
-    secondary:      '#0ea5e9',   // sky
-    accent:         '#6366f1',   // indigo
+    primary: '#1e40af',   // deep blue
+    primaryHover: '#1d4ed8',
+    primaryLight: '#dbeafe',
+    primaryDark: '#1e3a8a',
+    secondary: '#0ea5e9',   // sky
+    accent: '#6366f1',   // indigo
   },
   role: {
     lender: {
-      primary:  '#1e40af',
-      light:    '#dbeafe',
+      primary: '#1e40af',
+      light: '#dbeafe',
       gradient: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)',
     },
     admin: {
-      primary:  '#1e40af', // Changed from purple
-      light:    '#dbeafe',
+      primary: '#1e40af', // Changed from purple
+      light: '#dbeafe',
       gradient: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)',
     },
     borrower: {
-      primary:  '#1e40af', // Changed from teal
-      light:    '#dbeafe',
+      primary: '#1e40af', // Changed from teal
+      light: '#dbeafe',
       gradient: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)',
     },
   },
   risk: {
     GREEN: {
-      bg:      '#f0fdf4',
-      border:  '#bbf7d0',
-      text:    '#166534',
-      badge:   '#dcfce7',
-      dot:     '#22c55e',
-      label:   'Low Risk',
+      bg: '#f0fdf4',
+      border: '#bbf7d0',
+      text: '#166534',
+      badge: '#dcfce7',
+      dot: '#22c55e',
+      label: 'Low Risk',
     },
     AMBER: {
-      bg:      '#fffbeb',
-      border:  '#fde68a',
-      text:    '#92400e',
-      badge:   '#fef3c7',
-      dot:     '#f59e0b',
-      label:   'Medium Risk',
+      bg: '#fffbeb',
+      border: '#fde68a',
+      text: '#92400e',
+      badge: '#fef3c7',
+      dot: '#f59e0b',
+      label: 'Medium Risk',
     },
     RED: {
-      bg:      '#fef2f2',
-      border:  '#fecaca',
-      text:    '#991b1b',
-      badge:   '#fee2e2',
-      dot:     '#ef4444',
-      label:   'High Risk',
+      bg: '#fef2f2',
+      border: '#fecaca',
+      text: '#991b1b',
+      badge: '#fee2e2',
+      dot: '#ef4444',
+      label: 'High Risk',
     },
   },
   status: {
-    active:    { bg: '#dbeafe', text: '#1e40af', dot: '#3b82f6' },
-    pending:   { bg: '#dbeafe', text: '#1e40af', dot: '#3b82f6' },
-    paid:      { bg: '#dcfce7', text: '#166534', dot: '#22c55e' },
+    active: { bg: '#dbeafe', text: '#1e40af', dot: '#3b82f6' },
+    pending: { bg: '#dbeafe', text: '#1e40af', dot: '#3b82f6' },
+    paid: { bg: '#dcfce7', text: '#166534', dot: '#22c55e' },
     defaulted: { bg: '#fee2e2', text: '#991b1b', dot: '#ef4444' },
-    default:   { bg: '#fee2e2', text: '#991b1b', dot: '#ef4444' },
-    overdue:   { bg: '#fef3c7', text: '#92400e', dot: '#f59e0b' },
+    default: { bg: '#fee2e2', text: '#991b1b', dot: '#ef4444' },
+    overdue: { bg: '#fef3c7', text: '#92400e', dot: '#f59e0b' },
     suspended: { bg: '#f3f4f6', text: '#374151', dot: '#9ca3af' },
   },
   formatCurrency: (amount) => {
@@ -79,6 +79,23 @@ export const THEME = {
     const year = d.getFullYear();
     return `${day} ${month} ${year}`;
   },
+
+  getDOB: (obj) => {
+    if (!obj) return null;
+    return obj.dob || 
+           obj.date_of_birth || 
+           obj.dateOfBirth || 
+           obj.birthday || 
+           obj.birth_date || 
+           obj.birthDate || 
+           obj.born ||
+           obj.birth ||
+           obj.profile?.dob || 
+           obj.profile?.date_of_birth || 
+           obj.profile?.birthday ||
+           obj.profile?.dateOfBirth;
+  },
+
   // Audit log format: dd mm yyyy - hh:mm AM/PM
   formatDateTime: (dateStr) => {
     if (!dateStr) return '—';
@@ -118,10 +135,10 @@ export const DEMO_CREDENTIALS = [
   },
   {
     role: 'borrower',
-    name: 'David Zulu',
+    name: 'james',
     phone: '0123456789',
-    email: 'david@gmail.com',
-    password: '123456',
+    email: 'james@gmail.com',
+    password: '@James1234',
     nrc: '123456/78/1',
     initials: 'DZ',
     referralCode: 'DAVID842',

@@ -23,6 +23,7 @@ import {
 import { RiskBadge, Btn, PageHeader, EmptyState, ConfirmDialog } from '../../components/UI';
 import Modal from '../../components/Modal';
 import { useAuth } from '../../context/AuthContext';
+import { THEME } from '../../theme';
 
 const EMPTY_FORM = { name: '', nrc: '', phone: '', dob: '' };
 
@@ -114,7 +115,10 @@ export default function LenderBorrowers() {
       formData.append('name', form.name);
       formData.append('nrc', form.nrc);
       formData.append('phone', form.phone);
-      if (form.dob) formData.append('dob', form.dob);
+      if (form.dob) {
+        formData.append('dob', form.dob);
+        formData.append('date_of_birth', form.dob);
+      }
       if (photoFile) formData.append('photo', photoFile);
       if (nrcFile) formData.append('nrc_document', nrcFile);
 
@@ -238,6 +242,7 @@ export default function LenderBorrowers() {
                    </div>
                    <div>
                       <h4 className="text-[13px] font-black text-slate-900 uppercase tracking-tighter leading-tight">{b.name}</h4>
+                      <p className="text-[10px] font-black text-blue-600 uppercase tracking-tighter mt-1">Born: {THEME.formatDate(THEME.getDOB(b))}</p>
                       <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-0.5 opacity-70">ID: {b.nrc}</p>
                    </div>
                 </div>
@@ -325,7 +330,7 @@ export default function LenderBorrowers() {
                  {[
                    { icon: Activity, label: 'Active Loans', value: loans.filter(l=>l.status!=='paid').length, color: 'text-blue-600' },
                    { icon: AlertTriangle, label: 'Late Loans', value: isFree ? '???' : loans.filter(l=>l.status==='overdue').length, color: 'text-rose-500' },
-                   { icon: Calendar, label: 'Born On', value: viewModal.dob, color: 'text-slate-500' },
+                   { icon: Calendar, label: 'Date of Birth', value: THEME.formatDate(THEME.getDOB(viewModal)), color: 'text-slate-500' },
                    { icon: Layers, label: 'Member Since', value: viewModal.addedDate || '2025', color: 'text-slate-500' },
                  ].map((item, i) => (
                    <div key={i} className="flex flex-col gap-0.5 p-3 bg-white rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">

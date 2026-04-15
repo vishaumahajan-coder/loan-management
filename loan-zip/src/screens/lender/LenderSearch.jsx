@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { PageHeader, Btn } from '../../components/UI';
 import Modal from '../../components/Modal';
+import { THEME } from '../../theme';
 
 export default function LenderSearch() {
   const [query, setQuery]       = useState('');
@@ -86,7 +87,7 @@ export default function LenderSearch() {
                   </div>
                   <div>
                     <p className="text-sm font-black text-gray-900">{b.name}</p>
-                    <p className="text-[10px] font-mono text-gray-400">{b.nrc}</p>
+                    <p className="text-[9px] font-mono text-gray-400 capitalize">{b.nrc} • Born: {THEME.formatDate(THEME.getDOB(b))}</p>
                   </div>
                 </div>
                 <ChevronRight size={16} className="text-gray-300" />
@@ -111,7 +112,7 @@ export default function LenderSearch() {
                 <div>
                    <h3 className="text-base font-black text-gray-900 leading-tight">{viewModal.name}</h3>
                    <p className="text-xs font-mono text-gray-500">{viewModal.nrc} • {viewModal.phone}</p>
-                   <p className="text-[10px] font-black text-blue-600 uppercase tracking-tighter mt-1">Born: {viewModal.dob || '—'}</p>
+                   <p className="text-[10px] font-black text-blue-600 uppercase tracking-tighter mt-1">Born: {THEME.formatDate(THEME.getDOB(viewModal))}</p>
                 </div>
               </div>
 

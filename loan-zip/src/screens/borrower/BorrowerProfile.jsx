@@ -35,17 +35,30 @@ export default function BorrowerProfile() {
     totalLoans: riskData.totalLoans,
     totalDefaults: riskData.defaultedLoans,
     activeDefaults: riskData.defaultedLoans,
-    nrc: user?.nrc,
-    dob: riskData.profile?.dob ? THEME.formatDate(riskData.profile.dob) : '—'
+    dob: THEME.formatDate(THEME.getDOB(riskData) || THEME.getDOB(user))
   } : null;
+
+  console.log('Borrower Risk Profile Data:', riskData);
   const [toastMsg, setToastMsg] = useState('');
   const [editModal, setEditModal] = useState(false);
   const [form, setForm] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
+    dob: user?.dob || '',
     newPassword: '',
     confirmPassword: '',
   });
+
+  useEffect(() => {
+    if (user) {
+      setForm(f => ({
+        ...f,
+        name: user.name || '',
+        phone: user.phone || '',
+        dob: user.dob || ''
+      }));
+    }
+  }, [user]);
 
   const showToast = (msg) => {
     setToastMsg(msg);
@@ -63,11 +76,13 @@ export default function BorrowerProfile() {
       await api.put('/auth/update-profile', {
         name: form.name,
         phone: form.phone,
+        dob: form.dob,
         newPassword: form.newPassword || undefined
       });
       
       showToast('Profile updated successfully! 🚀');
       setEditModal(false);
+      fetchRisk(); // Re-fetch to update display with fresh data from backend
     } catch (error) {
       showToast(error.response?.data?.message || 'Update failed');
     } finally {
@@ -137,10 +152,11 @@ export default function BorrowerProfile() {
           {[
             { label: 'Full Name', key: 'name', type: 'text' },
             { label: 'Phone Number', key: 'phone', type: 'tel' },
+            { label: 'Date of Birth', key: 'dob', type: 'date' },
           ].map(({ label, key, type }) => (
             <div key={key} className="flex flex-col gap-1.5">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">{label}</label>
-              <input type={type} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+              <input type={type} value={form[key] || ''} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
             </div>
           ))}
@@ -153,7 +169,7 @@ export default function BorrowerProfile() {
                 { label: 'Confirm Password', key: 'confirmPassword', type: 'password' },
               ].map(({ label, key, type }) => (
                 <div key={key} className="flex flex-col gap-1.5">
-                  <label className="text-[10px) font-black text-gray-400 uppercase tracking-widest px-1">{label}</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">{label}</label>
                   <input type={type} value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
                     placeholder="••••••••"
                     className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
