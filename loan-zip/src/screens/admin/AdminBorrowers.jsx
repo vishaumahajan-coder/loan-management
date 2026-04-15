@@ -299,7 +299,16 @@ export default function AdminBorrowers() {
       <ConfirmDialog
         isOpen={!!deleteConfirm}
         onClose={() => setDeleteConfirm(null)}
-        onConfirm={() => { setBorrowers(p => p.filter(b => b.id !== deleteConfirm?.id)); setDeleteConfirm(null); }}
+        onConfirm={async () => {
+          try {
+            await api.delete(`/admin/borrowers/${deleteConfirm.id}`);
+            fetchBorrowers();
+            setDeleteConfirm(null);
+          } catch (error) {
+            console.error('Failed to delete borrower', error);
+            alert('Failed to delete borrower');
+          }
+        }}
         title="Delete Borrower?"
         message={`Are you sure you want to delete ${deleteConfirm?.name}? This action cannot be undone.`}
         confirmLabel="Yes, Delete"
