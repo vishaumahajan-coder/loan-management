@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { LayoutDashboard, CreditCard, User, LogOut, Menu, X, ChevronRight, Search, Gift } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { THEME } from '../theme';
+import { API_BASE_URL } from '../services/api';
 
 const NAV = [
   { path: '/borrower/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -33,8 +34,17 @@ export default function BorrowerLayout() {
       </div>
 
       <div className="mx-4 mt-4 mb-2 p-3 rounded-2xl bg-white/10 border border-white/10 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-          {user?.initials || 'BW'}
+        <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
+          {user?.profile_image_url ? (
+            <img 
+              src={API_BASE_URL.replace('/api', '') + user.profile_image_url} 
+              alt="Avatar" 
+              className="w-full h-full object-cover"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          ) : (
+            <span>{user?.initials || 'BW'}</span>
+          )}
         </div>
         <div className="min-w-0">
           <p className="text-white text-xs font-bold truncate">{user?.name}</p>
@@ -117,8 +127,17 @@ export default function BorrowerLayout() {
                <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-blue-600 transition-colors">My Loans</span>
             </Link>
             <Link to="/borrower/profile" className="flex items-center gap-2 p-1 md:p-1.5 pr-3 md:pr-4 rounded-xl bg-slate-50 border border-gray-100 hover:border-blue-100 transition-all active:scale-95">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-[10px] shadow-lg shadow-blue-500/20">
-                {user?.initials || 'BW'}
+              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-[10px] shadow-lg shadow-blue-500/20 overflow-hidden">
+                {user?.profile_image_url ? (
+                  <img 
+                    src={API_BASE_URL.replace('/api', '') + user.profile_image_url} 
+                    alt="Avatar" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                ) : (
+                  <span>{user?.initials || 'BW'}</span>
+                )}
               </div>
               <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest hidden sm:block">{user?.name?.split(' ')[0]}</span>
             </Link>

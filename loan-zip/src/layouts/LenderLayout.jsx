@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { THEME } from '../theme';
+import { API_BASE_URL } from '../services/api';
 
 const NAV = [
   { path: '/lender/dashboard',  label: 'Dashboard',       icon: LayoutDashboard },
@@ -43,8 +44,17 @@ export default function LenderLayout() {
 
       {/* User Badge */}
       <div className="mx-4 mt-4 mb-2 p-3 rounded-2xl bg-white/10 border border-white/10 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-          {user?.initials || 'LP'}
+        <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
+          {user?.profile_image_url ? (
+            <img 
+              src={API_BASE_URL.replace('/api', '') + user.profile_image_url} 
+              alt="Avatar" 
+              className="w-full h-full object-cover"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          ) : (
+            <span>{user?.initials || 'LP'}</span>
+          )}
         </div>
         <div className="min-w-0">
           <p className="text-white text-xs font-bold truncate">{user?.name || 'Lender'}</p>
@@ -155,8 +165,17 @@ export default function LenderLayout() {
                <Search size={20} />
             </button>
             <Link to="/lender/profile" className="flex items-center gap-2 p-1 md:p-1.5 pr-3 md:pr-4 rounded-xl bg-slate-50 border border-gray-100 hover:border-blue-100 transition-all active:scale-95">
-              <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-black text-[10px] shadow-lg shadow-emerald-500/20">
-                {user?.initials || 'LP'}
+              <div className="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white font-black text-[10px] shadow-lg shadow-emerald-500/20 overflow-hidden">
+                {user?.profile_image_url ? (
+                  <img 
+                    src={API_BASE_URL.replace('/api', '') + user.profile_image_url} 
+                    alt="Avatar" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                ) : (
+                  <span>{user?.initials || 'LP'}</span>
+                )}
               </div>
               <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest hidden sm:block">{user?.name?.split(' ')[0]}</span>
             </Link>

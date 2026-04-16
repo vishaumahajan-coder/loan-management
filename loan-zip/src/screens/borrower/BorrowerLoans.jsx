@@ -26,6 +26,8 @@ export default function BorrowerLoans() {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewModal, setViewModal] = useState(null);
+  const [applyModal, setApplyModal] = useState(false);
+  const [creditModal, setCreditModal] = useState(false);
 
   const fetchLoans = async () => {
     try {
@@ -96,7 +98,12 @@ export default function BorrowerLoans() {
               <Wallet size={18} className="mb-1 text-blue-200 opacity-60" />
               <h4 className="text-xs font-black uppercase leading-none">New Offer</h4>
               <p className="text-[10px] font-bold text-blue-100/60 mt-1 uppercase">K15k Credit</p>
-              <button className="w-full px-4 py-2 bg-white text-[#020617] rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all mt-3">Apply</button>
+              <button 
+                onClick={() => setApplyModal(true)}
+                className="w-full px-4 py-2 bg-white text-[#020617] rounded-lg text-[9px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all mt-3"
+              >
+                Apply
+              </button>
             </div>
           </div>
         </div>
@@ -111,7 +118,12 @@ export default function BorrowerLoans() {
           <p className="text-[10px] font-black uppercase mb-0.5">Credit Alert</p>
           <p className="text-[9px] text-blue-400 font-bold uppercase tracking-widest opacity-80 leading-none">New Credit Limit: K15,000 Available</p>
         </div>
-        <button className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-md text-[9px] font-black uppercase tracking-widest transition-all">View</button>
+        <button 
+          onClick={() => setCreditModal(true)}
+          className="px-3 py-1 bg-white/5 hover:bg-white/10 rounded-md text-[9px] font-black uppercase tracking-widest transition-all"
+        >
+          View
+        </button>
       </div>
 
       <div className="space-y-4 px-1 pb-16">
@@ -296,6 +308,87 @@ export default function BorrowerLoans() {
             </div>
           );
         })()}
+      </Modal>
+
+      {/* New Offer Apply Modal */}
+      <Modal isOpen={applyModal} onClose={() => setApplyModal(false)} title="Credit Application">
+        <div className="space-y-6 text-center py-4">
+          <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center text-blue-600 mx-auto mb-4">
+             <Target size={32} />
+          </div>
+          <div>
+            <h3 className="text-xl font-black text-slate-900 uppercase italic">K15,000 Credit Offer</h3>
+            <p className="text-xs text-slate-400 font-bold mt-2">You are eligible for an instant credit boost based on your repayment history.</p>
+          </div>
+          <div className="bg-slate-50 p-4 rounded-2xl text-left space-y-3">
+             <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-slate-400 uppercase">Interest Rate</span>
+                <span className="text-xs font-black text-slate-900">10% / Month</span>
+             </div>
+             <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black text-slate-400 uppercase">Processing Fee</span>
+                <span className="text-xs font-black text-slate-900">K250</span>
+             </div>
+             <div className="flex justify-between items-center border-t border-slate-200 pt-2">
+                <span className="text-[10px] font-black text-blue-600 uppercase">Total Offer</span>
+                <span className="text-sm font-black text-blue-600 italic">K15,250</span>
+             </div>
+          </div>
+          <p className="text-[9px] text-slate-400 font-bold italic uppercase tracking-tighter">By clicking confirm, you agree to our terms and conditions.</p>
+          <div className="flex gap-3">
+             <button onClick={() => setApplyModal(false)} className="flex-1 py-3 border border-slate-200 rounded-xl text-[10px] font-black uppercase text-slate-500 hover:bg-slate-50 transition-all">Cancel</button>
+             <button onClick={() => { alert('Application Submitted! 🚀 Our team will review your credit request shortly.'); setApplyModal(false); }} className="flex-1 py-3 bg-[#020617] text-white rounded-xl text-[10px] font-black uppercase shadow-lg shadow-slate-900/20 active:scale-95 transition-all">Confirm Apply</button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Credit Analysis Modal */}
+      <Modal isOpen={creditModal} onClose={() => setCreditModal(false)} title="Credit Analysis">
+        <div className="space-y-6 py-2">
+          <div className="bg-[#020617] p-6 rounded-[32px] text-center text-white relative overflow-hidden shadow-xl">
+            <div className="absolute inset-0 bg-blue-600/10 blur-3xl"></div>
+            <p className="relative z-10 text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Total Credit Limit</p>
+            <h3 className="relative z-10 text-3xl font-black italic tracking-tighter leading-none mb-4">K25,000</h3>
+            <div className="w-full bg-white/10 h-1.5 rounded-full relative z-10 overflow-hidden">
+               <div className="bg-blue-500 h-full w-[40%]" />
+            </div>
+            <div className="relative z-10 flex justify-between mt-2 px-1">
+               <span className="text-[8px] font-bold text-white/50 uppercase">Spent: K10,000</span>
+               <span className="text-[8px] font-bold text-blue-400 uppercase tracking-widest">Available: K15,000</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+             <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-100">
+                <ShieldCheck size={16} className="text-emerald-600 mb-2" />
+                <p className="text-[9px] font-black text-emerald-600 uppercase">Account Health</p>
+                <p className="text-xs font-black text-slate-900 mt-0.5">EXCELLENT</p>
+             </div>
+             <div className="p-3 bg-blue-50 rounded-2xl border border-blue-100">
+                <Zap size={16} className="text-blue-600 mb-2" />
+                <p className="text-[9px] font-black text-blue-600 uppercase">Max Capability</p>
+                <p className="text-xs font-black text-slate-900 mt-0.5">K50,000</p>
+             </div>
+          </div>
+
+          <div className="space-y-2">
+             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Credit Score Breakdown</h4>
+             <div className="p-4 bg-slate-50 rounded-2xl space-y-3">
+                {[
+                  { label: 'Payment History', value: 'High Impact', color: 'text-emerald-600' },
+                  { label: 'Credit Utilization', value: 'Moderate', color: 'text-blue-600' },
+                  { label: 'Account Age', value: 'Loyal User', color: 'text-indigo-600' }
+                ].map(item => (
+                  <div key={item.label} className="flex justify-between items-center">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">{item.label}</span>
+                    <span className={`text-[10px] font-black uppercase ${item.color}`}>{item.value}</span>
+                  </div>
+                ))}
+             </div>
+          </div>
+          
+          <button onClick={() => setCreditModal(false)} className="w-full py-3 bg-[#020617] text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl active:scale-95 transition-all mt-2">Understood</button>
+        </div>
       </Modal>
 
     </div>

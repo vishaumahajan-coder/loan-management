@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-// import { mockBorrowers } from '../../data/mockData';
 import { RiskBadge, Btn, PageHeader } from '../../components/UI';
 import Modal from '../../components/Modal';
 import { LogOut, Phone, UserCheck, Shield, Calendar, Edit3, Lock, Camera, Upload, Gift } from 'lucide-react';
 import { THEME } from '../../theme';
-
 import api from '../../services/api';
 
 export default function BorrowerProfile() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate         = useNavigate();
   const [riskData, setRiskData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const fetchRisk = async () => {
     try {
@@ -38,7 +37,6 @@ export default function BorrowerProfile() {
     dob: THEME.formatDate(THEME.getDOB(riskData) || THEME.getDOB(user))
   } : null;
 
-  console.log('Borrower Risk Profile Data:', riskData);
   const [toastMsg, setToastMsg] = useState('');
   const [editModal, setEditModal] = useState(false);
   const [form, setForm] = useState({
@@ -65,6 +63,29 @@ export default function BorrowerProfile() {
     setTimeout(() => setToastMsg(''), 3500);
   };
 
+  const handleFileChange = async (e, fieldName) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append(fieldName, file);
+
+    try {
+      setUploading(true);
+      const response = await api.put('/auth/update-profile', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (response.data && response.data.user) {
+        updateUser(response.data.user);
+        showToast(`${fieldName === 'license' ? 'ID Proof' : 'Photo'} updated successfully!`);
+      }
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleUpdateProfile = async () => {
     if (form.newPassword && form.newPassword !== form.confirmPassword) {
       showToast('Passwords do not match');
@@ -82,7 +103,7 @@ export default function BorrowerProfile() {
       
       showToast('Profile updated successfully! 🚀');
       setEditModal(false);
-      fetchRisk(); // Re-fetch to update display with fresh data from backend
+      fetchRisk();
     } catch (error) {
       showToast(error.response?.data?.message || 'Update failed');
     } finally {
@@ -101,16 +122,26 @@ export default function BorrowerProfile() {
         <div className="h-24 rounded-t-2xl" style={{ background: THEME.role.borrower.gradient }} />
         <div className="px-5 pb-5">
           <div className="-mt-10 mb-4 relative w-fit">
-            <div className="w-20 h-20 rounded-2xl bg-blue-100 border-4 border-white shadow-lg flex items-center justify-center text-blue-700 font-black text-2xl overflow-hidden relative group">
-              {user?.initials || 'BW'}
-              <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <div className="w-20 h-20 rounded-2xl bg-blue-50 border-4 border-white shadow-lg flex items-center justify-center text-blue-700 font-black text-2xl overflow-hidden relative group">
+              {user?.profile_image_url ? (
+                <img 
+                  src={api.defaults.baseURL.replace('/api', '') + user.profile_image_url} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => { e.target.style.display = 'none'; }}
+                />
+              ) : (
+                <span>{user?.initials || 'BW'}</span>
+              )}
+              <label className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
                 <Camera size={20} className="text-white" />
-                <input type="file" accept="image/*" capture="user" className="hidden" onChange={() => showToast('Profile photo updated')} />
+                <span className="text-[8px] font-black uppercase mt-1">Change</span>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'profile_photo')} />
               </label>
             </div>
             <label className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full border-2 border-white flex items-center justify-center text-white shadow-md cursor-pointer hover:bg-blue-700 transition-colors">
               <Camera size={12} />
-              <input type="file" accept="image/*" capture="user" className="hidden" onChange={() => showToast('Profile photo updated')} />
+              <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'profile_photo')} />
             </label>
           </div>
           <h2 className="text-xl font-black text-gray-900">{user?.name}</h2>
@@ -185,20 +216,35 @@ export default function BorrowerProfile() {
       </Modal>
 
       {/* ID Proof Upload Section */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-3 flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            <h3 className="text-[10px] font-black text-gray-800 uppercase tracking-widest">ID Proof</h3>
-            <span className="px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-600 font-bold text-[9px] leading-tight">Pending</span>
-          </div>
-          <p className="text-[9px] font-medium text-gray-400">Picture or PDF of NRC</p>
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Identification Proof (NRC)</h3>
+          {user?.license_url ? (
+            <span className="px-2 py-0.5 rounded-md bg-green-100 text-green-700 text-[10px] font-bold uppercase">Verified</span>
+          ) : (
+            <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold uppercase">Pending</span>
+          )}
         </div>
-        <label className="flex items-center justify-center gap-1.5 px-3 py-1.5 border border-dashed border-gray-300 rounded-lg bg-gray-50 cursor-pointer hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors text-gray-600 font-black text-[10px] uppercase">
-          <Upload size={12} />
-          Upload
-          <input type="file" accept="image/*,.pdf" capture="environment" className="hidden" onChange={() => showToast('ID Document uploaded successfully')} />
+        <label className="flex items-center justify-center gap-2 w-full py-3.5 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 cursor-pointer hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors text-gray-600 font-bold text-sm">
+          <Upload size={16} />
+          {user?.license_url ? 'Update NRC Document' : 'Upload NRC Document'}
+          <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => handleFileChange(e, 'license')} />
         </label>
+        {user?.license_url && (
+           <div className="mt-3 p-2 bg-blue-50 rounded-lg flex items-center justify-between">
+              <span className="text-[9px] font-black text-blue-600 uppercase italic">Your NRC document is securely attached</span>
+              <a href={api.defaults.baseURL.replace('/api', '') + user.license_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-3 py-1.5 rounded-md font-bold uppercase tracking-wider">View</a>
+           </div>
+        )}
       </div>
+
+      {/* Uploading Overlay */}
+      {uploading && (
+         <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-xs font-black text-blue-900 uppercase tracking-widest">Processing Transaction...</p>
+         </div>
+      )}
 
       {/* Credit Info */}
       {borrowerData && (
@@ -216,9 +262,6 @@ export default function BorrowerProfile() {
               </div>
             ))}
           </div>
-          <p className="text-xs text-gray-400 text-center">
-            Risk data is shared with lenders on the LendaNet network.
-          </p>
         </div>
       )}
 

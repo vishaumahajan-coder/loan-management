@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { LogOut, Edit2, Phone, Mail, Building, User, Shield, Camera, Gift } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import api from '../../services/api';
+import api, { API_BASE_URL } from '../../services/api';
 import { Btn, PageHeader } from '../../components/UI';
 import Modal from '../../components/Modal';
 
@@ -19,10 +19,34 @@ export default function LenderProfile() {
     confirmPassword: '',
   });
   const [toastMsg, setToastMsg] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const showToast = (msg) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(''), 3500);
+  };
+
+  const handleFileChange = async (e, fieldName) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append(fieldName, file);
+
+    try {
+      setUploading(true);
+      const response = await api.put('/auth/update-profile', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (response.data && response.data.user) {
+        updateUser(response.data.user);
+        showToast(`${fieldName === 'license' ? 'License' : 'Photo'} updated successfully!`);
+      }
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleLogout = () => { logout(); navigate('/login'); };
@@ -37,16 +61,26 @@ export default function LenderProfile() {
         <div className="px-5 pb-5">
           <div className="flex items-end justify-between -mt-10 mb-4">
             <div className="relative w-fit">
-              <div className="w-20 h-20 rounded-2xl bg-blue-100 border-4 border-white shadow-lg flex items-center justify-center text-blue-700 font-black text-2xl overflow-hidden relative group">
-                {user?.initials || 'LP'}
-                <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              <div className="w-20 h-20 rounded-2xl bg-blue-50 border-4 border-white shadow-lg flex items-center justify-center text-blue-700 font-black text-2xl overflow-hidden relative group">
+                {user?.profile_image_url ? (
+                  <img 
+                    src={API_BASE_URL.replace('/api', '') + user.profile_image_url} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                ) : (
+                  <span>{user?.initials || 'LP'}</span>
+                )}
+                <label className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
                   <Camera size={20} className="text-white" />
-                  <input type="file" accept="image/*" capture="user" className="hidden" onChange={() => showToast('Profile photo updated')} />
+                  <span className="text-[8px] font-black uppercase mt-1">Change</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'profile_photo')} />
                 </label>
               </div>
               <label className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 rounded-full border-2 border-white flex items-center justify-center text-white shadow-md cursor-pointer hover:bg-blue-700 transition-colors">
                 <Camera size={12} />
-                <input type="file" accept="image/*" capture="user" className="hidden" onChange={() => showToast('Profile photo updated')} />
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e, 'profile_photo')} />
               </label>
             </div>
             <Btn size="sm" variant="outline" onClick={() => setEditModal(true)}>
@@ -87,10 +121,24 @@ export default function LenderProfile() {
         <label className="flex items-center justify-center gap-2 w-full py-3.5 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 cursor-pointer hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors text-gray-600 font-bold text-sm">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
           Update Proof Document
-          <input type="file" accept="image/*,.pdf" capture="environment" className="hidden" onChange={() => showToast('License document uploaded successfully')} />
+          <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => handleFileChange(e, 'license')} />
         </label>
         <p className="text-[10px] text-gray-400 mt-2 text-center pointer-events-none">Take a picture or upload a PDF</p>
+        {user?.license_url && (
+           <div className="mt-3 p-2 bg-blue-50 rounded-lg flex items-center justify-between">
+              <span className="text-[9px] font-black text-blue-600 uppercase">Current license file attached</span>
+              <a href={API_BASE_URL.replace('/api', '') + user.license_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-2 py-1 rounded-md font-bold">View</a>
+           </div>
+        )}
       </div>
+
+      {/* Uploading Overlay */}
+      {uploading && (
+         <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-xs font-black text-blue-900 uppercase tracking-widest">Uploading Document...</p>
+         </div>
+      )}
 
       {/* Account Status */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
