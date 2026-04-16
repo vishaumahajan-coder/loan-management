@@ -7,7 +7,7 @@ import { Btn, PageHeader } from '../../components/UI';
 import Modal from '../../components/Modal';
 
 export default function LenderProfile() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const navigate         = useNavigate();
   const [editModal, setEditModal] = useState(false);
   const [form, setForm] = useState({
@@ -155,7 +155,10 @@ export default function LenderProfile() {
               return;
             }
             try {
-              await api.put('/auth/update-profile', form);
+              const response = await api.put('/auth/update-profile', form);
+              if (response.data && response.data.user) {
+                updateUser(response.data.user);
+              }
               showToast('Profile updated successfully');
               setEditModal(false);
             } catch (error) {

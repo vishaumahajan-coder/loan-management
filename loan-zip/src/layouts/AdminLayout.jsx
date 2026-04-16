@@ -125,17 +125,17 @@ export default function AdminLayout() {
           </div>
           
           <div className="flex items-center gap-2 md:gap-4">
-            <div className="hidden sm:flex relative">
+            {/* <div className="hidden sm:flex relative">
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
               <input 
                 type="text" 
                 placeholder="Search..." 
                 className="pl-10 pr-4 py-2 bg-slate-50 border border-gray-100 rounded-xl text-xs font-bold focus:border-blue-500 outline-none w-48 transition-all"
               />
-            </div>
+            </div> */}
             <Link to="/admin/profile" className="flex items-center gap-2 p-1 md:p-1.5 pr-3 md:pr-4 rounded-xl bg-slate-50 border border-gray-100 hover:border-blue-100 transition-all active:scale-95">
               <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-[10px] shadow-lg shadow-blue-500/20">
-                {user?.initials || 'AU'}
+                {user?.initials || 'S'}
               </div>
               <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest hidden sm:block">{user?.name?.split(' ')[0]}</span>
             </Link>

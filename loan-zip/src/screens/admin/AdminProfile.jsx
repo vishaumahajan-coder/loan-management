@@ -34,13 +34,13 @@ export default function AdminProfile() {
       <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm overflow-hidden p-6 relative">
         <div className="absolute top-5 right-5">
           <Btn size="xs" variant="outline" onClick={() => setEditModal(true)}>
-            <Edit2 size={12}/> Edit Profile
+            <Edit2 size={12} /> Edit Profile
           </Btn>
         </div>
 
         <div className="text-center">
           <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-black text-2xl mx-auto mb-3 border-4 border-blue-50/50">
-            {user?.initials || 'AU'}
+            {user?.initials || 'S'}
           </div>
           <h2 className="text-xl font-black text-gray-900 tracking-tight">{user?.name}</h2>
           <p className="text-blue-600 font-bold text-[11px] uppercase tracking-widest leading-none mt-1">System Administrator</p>
@@ -113,7 +113,7 @@ export default function AdminProfile() {
             }
             setEditModal(false);
             showToast('Admin profile updated');
-          }}><Edit2 size={14}/> Save Changes</Btn>
+          }}><Edit2 size={14} /> Save Changes</Btn>
         </div>
       </Modal>
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import {
    FileText,
@@ -20,6 +21,7 @@ import Modal from '../../components/Modal';
 import { THEME } from '../../theme';
 
 export default function LenderLoans() {
+   const location = useLocation();
    const [loans, setLoans] = useState([]);
    const [borrowerOptions, setBorrowerOptions] = useState([]);
    const [loading, setLoading] = useState(true);
@@ -78,6 +80,17 @@ export default function LenderLoans() {
       };
       loadData();
    }, []);
+
+   // Handle auto-selected borrower from Search screen
+   useEffect(() => {
+      if (location.state?.selectedBorrower) {
+         const b = location.state.selectedBorrower;
+         setNewLoan(prev => ({ ...prev, borrowerId: b.id }));
+         setIsModalOpen(true);
+         // Clear the state to avoid re-opening on manual refresh
+         window.history.replaceState({}, document.title);
+      }
+   }, [location.state]);
 
    const filtered = loans.filter(l =>
       (l.borrowerName || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -360,13 +373,13 @@ export default function LenderLoans() {
                   </div>
 
                   <div className="space-y-1.5">
-                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Payments</label>
+                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Repayments</label>
                      <select
                         value={newLoan.instalments}
                         onChange={e => setNewLoan({ ...newLoan, instalments: e.target.value })}
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                      >
-                        {[1, 2, 3, 4, 5, 6, 12].map(n => <option key={n} value={n}>{n} Months</option>)}
+                        {[1, 2, 3, 4, 5, 6, 12, 18, 24, 36, 48, 60].map(n => <option key={n} value={n}>{n} {n === 1 ? 'Month' : 'Months'}</option>)}
                      </select>
                   </div>
 

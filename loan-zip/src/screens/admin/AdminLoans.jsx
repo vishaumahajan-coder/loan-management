@@ -127,6 +127,36 @@ export default function AdminLoans() {
       }
    };
 
+   const handleExport = () => {
+      if (loans.length === 0) return alert("No data to export!");
+
+      const headers = ["Loan ID", "Borrower", "Lender", "Amount", "Interest Rate (%)", "Status", "Issue Date"];
+      const rows = loans.map(l => [
+         l.id,
+         l.borrowerName,
+         l.lenderName,
+         l.amount,
+         l.interestRate || 0,
+         l.status.toUpperCase(),
+         THEME.formatDate(l.issue_date || l.issueDate)
+      ]);
+
+      const csvContent = [
+         headers.join(","),
+         ...rows.map(r => r.join(","))
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `loans_export_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+   };
+
    return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-700 mx-2">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -138,7 +168,7 @@ export default function AdminLoans() {
            <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center gap-3 shadow-lg shadow-blue-500/30 active:scale-95">
               <Plus size={16} strokeWidth={3} /> Give Loan
            </button>
-           <button onClick={() => alert('Data perfectly exported as CSV!')} className="bg-[#020617] text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-3 shadow-md active:scale-95 hidden sm:flex">
+           <button onClick={handleExport} className="bg-[#020617] text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center gap-3 shadow-md active:scale-95 hidden sm:flex">
              <BarChart size={16} /> Export Data
            </button>
         </div>

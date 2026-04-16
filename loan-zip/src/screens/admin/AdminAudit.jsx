@@ -48,6 +48,34 @@ export default function AdminAudit() {
     (log.performedBy && log.performedBy.toLowerCase().includes(search.toLowerCase()))
   );
 
+  const handleExport = () => {
+    if (filtered.length === 0) return alert("No logs to export!");
+
+    const headers = ["Action", "Performed By", "Details", "Date & Time", "Record ID"];
+    const rows = filtered.map(log => [
+      log.action,
+      log.userName || log.performedBy || 'System',
+      (log.details || '').replace(/,/g, ';'), // Replace commas in details to avoid CSV breaking
+      THEME.formatDateTime(log.created_at),
+      log.id
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `System_Audit_Log_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-700 mx-2">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -56,6 +84,7 @@ export default function AdminAudit() {
           subtitle="A secure record of all activities" 
         />
         <button 
+          onClick={handleExport}
           className="px-6 py-2.5 bg-[#020617] text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center gap-2.5 shadow-md active:scale-95"
         >
           <Download size={14} /> Export CSV

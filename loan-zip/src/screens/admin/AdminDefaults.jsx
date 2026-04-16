@@ -63,6 +63,35 @@ export default function AdminDefaults() {
 
   const totalExposure = loans.reduce((sum, l) => sum + (l.amount || 0), 0);
 
+  const handleReport = () => {
+    if (loans.length === 0) return alert("No defaulted records to report!");
+
+    const headers = ["Borrower Name", "Loan ID", "Lender Name", "Unpaid Amount (K)", "Interest Rate (%)", "Overdue Date"];
+    const rows = loans.map(l => [
+      l.borrowerName,
+      l.id,
+      l.lenderName,
+      l.amount,
+      l.interestRate || 0,
+      THEME.formatDate(l.dueDate)
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Defaulters_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-700 mx-2">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -70,7 +99,10 @@ export default function AdminDefaults() {
           title="Defaulted Loans" 
           subtitle="View and manage borrowers who have missed their loan payments" 
         />
-        <button className="bg-[#020617] text-white px-5 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-rose-600 transition-all flex items-center gap-2.5 shadow-md active:scale-95 border border-[#020617]">
+        <button 
+          onClick={handleReport}
+          className="bg-[#020617] text-white px-5 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest hover:bg-rose-600 transition-all flex items-center gap-2.5 shadow-md active:scale-95 border border-[#020617]"
+        >
           <BarChart size={14} /> Report
         </button>
       </div>

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Loader, Shield, AlertTriangle, UserPlus, ChevronRight, Lock } from 'lucide-react';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { PageHeader, Btn } from '../../components/UI';
+import { PageHeader, Btn, RiskBadge } from '../../components/UI';
 import Modal from '../../components/Modal';
 import { THEME } from '../../theme';
 
@@ -32,8 +33,10 @@ export default function LenderSearch() {
     }
   };
 
+  const navigate = useNavigate();
   const directLend = (borrower) => {
-    alert(`AUTOMATION: Creating new loan for ${borrower.name}. \n1. Borrower added to your local ledger. \n2. Loan issuance form opened.`);
+    // Navigate to loans screen and pass borrower data in state
+    navigate('/lender/loans', { state: { selectedBorrower: borrower } });
     setViewModal(null);
   };
 
@@ -120,8 +123,8 @@ export default function LenderSearch() {
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { label: 'Active Loans', value: viewModal.activeLoans || 0 },
-                  { label: 'Risk Rating', value: viewModal.risk_status || 'GREEN' },
-                  { label: 'Total Defaults', value: viewModal.total_defaults || 0 },
+                  { label: 'Risk Rating', value: viewModal.riskLevel || 'GREEN' },
+                  { label: 'Total Defaults', value: viewModal.defaultCount || 0 },
                 ].map(item => (
                   <div key={item.label} className="p-3 bg-white border border-gray-100 rounded-2xl text-center relative overflow-hidden">
                     {item.label === 'Risk Rating' && isFree && (
@@ -129,7 +132,13 @@ export default function LenderSearch() {
                          <Lock size={10} className="text-blue-600" />
                       </div>
                     )}
-                    <p className={`text-sm font-black ${item.label === 'Risk Rating' && item.value === 'RED' ? 'text-red-500' : 'text-gray-800'}`}>{item.value}</p>
+                    <div className="flex justify-center mb-1">
+                      {item.label === 'Risk Rating' ? (
+                        <RiskBadge risk={(item.value || '').toUpperCase()} />
+                      ) : (
+                        <p className={`text-sm font-black ${item.label === 'Total Defaults' && item.value > 0 ? 'text-red-500' : 'text-gray-800'}`}>{item.value}</p>
+                      )}
+                    </div>
                     <p className="text-[9px] font-black text-gray-400 uppercase tracking-tighter">{item.label}</p>
                   </div>
                 ))}

@@ -56,6 +56,34 @@ export default function AdminReferrals() {
     return searchableFields.some(f => f.includes(q));
   });
 
+  const handleExport = () => {
+    if (filtered.length === 0) return alert("No referral data to export!");
+
+    const headers = ["Referral ID", "Referrer Name", "Referred User (Referee)", "Bonus Amount (K)", "Status"];
+    const rows = filtered.map(r => [
+      r.id,
+      r.referrer,
+      r.referee,
+      r.bonus,
+      r.status.toUpperCase()
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Referral_Program_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-10 pb-16 animate-in fade-in duration-700">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -64,6 +92,7 @@ export default function AdminReferrals() {
           subtitle="View and manage user referrals and rewards" 
         />
         <button 
+          onClick={handleExport}
           className="bg-[#020617] text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-600 transition-all flex items-center gap-3 shadow-md active:scale-95 border border-[#020617]"
         >
           <Network size={16} /> Program Details
