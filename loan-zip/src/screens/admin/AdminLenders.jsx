@@ -32,10 +32,20 @@ export default function AdminLenders() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewModal, setViewModal]     = useState(null);
+  const [plans, setPlans]             = useState([]);
   const [form, setForm]               = useState({ name: '', businessName: '', email: '', phone: '', password: 'LendaNet@123', license: null, nrc_document: null, planType: 'free', nrc: '', companyRegistrationNumber: '', lenderType: 'individual' });
   const [errors, setErrors]           = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewLoans, setViewLoans] = useState([]);
+
+  const fetchPlans = async () => {
+    try {
+      const response = await api.get('/admin/membership-plans');
+      setPlans(response.data);
+    } catch (error) {
+      console.error('Failed to fetch plans', error);
+    }
+  };
 
   const fetchLenders = async () => {
     try {
@@ -60,6 +70,7 @@ export default function AdminLenders() {
 
   useEffect(() => {
     fetchLenders();
+    fetchPlans();
   }, []);
 
   useEffect(() => {
@@ -319,8 +330,18 @@ export default function AdminLenders() {
           <div className="space-y-6 pb-2">
             <div className="relative p-6 bg-[#020617] rounded-3xl text-white overflow-hidden shadow-lg group">
               <div className="relative z-10 flex items-center gap-5">
-                 <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white font-black text-xl shadow-xl">
-                    {viewModal.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+                 <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white font-black text-xl shadow-xl overflow-hidden">
+                    {viewModal.profile_image_url ? (
+                      <img 
+                        src={api.defaults.baseURL.replace('/api', '') + viewModal.profile_image_url} 
+                        alt="Lender" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                      />
+                    ) : null}
+                    <span className={viewModal.profile_image_url ? 'hidden' : ''}>
+                      {viewModal.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+                    </span>
                  </div>
                  <div className="flex-1 min-w-0">
                     <h3 className="text-xl font-black truncate tracking-tight uppercase">{viewModal.businessName}</h3>
@@ -366,63 +387,63 @@ export default function AdminLenders() {
                <div className="p-4 border-b border-gray-100 bg-slate-50 flex items-center justify-between">
                   <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Uploaded Documents</h4>
                   <Upload size={14} className="text-slate-400" />
-               </div>
-               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="border border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2 bg-gray-50/50">
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Proof of Licence</p>
+                            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="border border-gray-100 rounded-3xl p-5 flex flex-col items-center gap-3 bg-gray-50/50 shadow-sm">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Proof of Licence</p>
                      {viewModal.license_url ? (
                        <a
-                         href={`https://lendanet-loan-production.up.railway.app${viewModal.license_url}`}
+                         href={api.defaults.baseURL.replace('/api', '') + viewModal.license_url}
                          target="_blank"
                          rel="noopener noreferrer"
-                         className="w-full"
+                         className="w-full relative group/img cursor-zoom-in"
                        >
                          <img
-                           src={`https://lendanet-loan-production.up.railway.app${viewModal.license_url}`}
+                           src={api.defaults.baseURL.replace('/api', '') + viewModal.license_url}
                            alt="License Document"
-                           className="w-full h-32 object-cover rounded-xl border border-gray-200"
+                           className="w-full h-48 object-cover rounded-2xl border border-gray-200 shadow-sm group-hover/img:brightness-75 transition-all"
                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                          />
-                         <div style={{display:'none'}} className="w-full h-32 rounded-xl border border-gray-200 bg-blue-50 items-center justify-center flex-col gap-1">
-                           <Upload size={20} className="text-blue-400" />
-                           <p className="text-[9px] font-bold text-blue-500 uppercase">Click to View File</p>
+                         <div style={{display:'none'}} className="w-full h-48 rounded-2xl border border-gray-200 bg-blue-50 items-center justify-center flex-col gap-2">
+                           <Upload size={24} className="text-blue-400" />
+                           <p className="text-[10px] font-bold text-blue-500 uppercase">Click to View File</p>
                          </div>
                        </a>
                      ) : (
-                       <div className="w-full h-32 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1">
-                         <Upload size={20} className="text-slate-300" />
-                         <p className="text-[9px] font-bold text-slate-400 uppercase">Not Uploaded</p>
+                       <div className="w-full h-48 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2">
+                         <Upload size={24} className="text-slate-300" />
+                         <p className="text-[10px] font-bold text-slate-400 uppercase">Not Uploaded</p>
                        </div>
                      )}
                   </div>
-                  <div className="border border-gray-100 rounded-2xl p-4 flex flex-col items-center gap-2 bg-gray-50/50">
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">NRC Document</p>
+                  <div className="border border-gray-100 rounded-3xl p-5 flex flex-col items-center gap-3 bg-gray-50/50 shadow-sm">
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NRC Document</p>
                      {viewModal.nrc_url ? (
                        <a
-                         href={`https://lendanet-loan-production.up.railway.app${viewModal.nrc_url}`}
+                         href={api.defaults.baseURL.replace('/api', '') + viewModal.nrc_url}
                          target="_blank"
                          rel="noopener noreferrer"
-                         className="w-full"
+                         className="w-full relative group/img cursor-zoom-in"
                        >
                          <img
-                           src={`https://lendanet-loan-production.up.railway.app${viewModal.nrc_url}`}
+                           src={api.defaults.baseURL.replace('/api', '') + viewModal.nrc_url}
                            alt="NRC Document"
-                           className="w-full h-32 object-cover rounded-xl border border-gray-200"
+                           className="w-full h-48 object-cover rounded-2xl border border-gray-200 shadow-sm group-hover/img:brightness-75 transition-all"
                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
                          />
-                         <div style={{display:'none'}} className="w-full h-32 rounded-xl border border-gray-200 bg-blue-50 items-center justify-center flex-col gap-1">
-                           <Upload size={20} className="text-blue-400" />
-                           <p className="text-[9px] font-bold text-blue-500 uppercase">Click to View File</p>
+                         <div style={{display:'none'}} className="w-full h-48 rounded-2xl border border-gray-200 bg-blue-50 items-center justify-center flex-col gap-2">
+                           <Upload size={24} className="text-blue-400" />
+                           <p className="text-[10px] font-bold text-blue-500 uppercase">Click to View File</p>
                          </div>
                        </a>
                      ) : (
-                       <div className="w-full h-32 rounded-xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-1">
-                         <Upload size={20} className="text-slate-300" />
-                         <p className="text-[9px] font-bold text-slate-400 uppercase">Not Uploaded</p>
+                       <div className="w-full h-48 rounded-2xl border-2 border-dashed border-gray-200 flex flex-col items-center justify-center gap-2">
+                         <Upload size={24} className="text-slate-300" />
+                         <p className="text-[10px] font-bold text-slate-400 uppercase">Not Uploaded</p>
                        </div>
                      )}
                   </div>
-               </div>
+                </div>
+   </div>
             </div>
 
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col mt-4">
@@ -454,7 +475,8 @@ export default function AdminLenders() {
                                 </td>
                                 <td className="px-4 py-3">
                                    <div className="flex flex-col">
-                                      <span className="text-[11px] font-black text-slate-900">K{Number(loan.amount).toLocaleString()}</span>
+                                      <span className="text-[11px] font-black text-slate-900">{THEME.formatCurrency(loan.amount)}</span>
+
                                       <span className="text-[9px] text-slate-400 font-bold uppercase">Rate: {loan.interest_rate}%</span>
                                    </div>
                                 </td>
@@ -625,20 +647,38 @@ export default function AdminLenders() {
           <div className="space-y-1.5">
              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Membership Plan</label>
              <div className="grid grid-cols-3 gap-2">
-                {['free', 'monthly', 'annual'].map(p => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setForm({...form, planType: p})}
-                    className={`py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                      form.planType === p 
-                        ? 'bg-[#020617] text-white shadow-lg' 
-                        : 'bg-gray-50 text-slate-400 border border-gray-100'
-                    }`}
-                  >
-                    {p === 'free' ? '🔒 Free' : `⭐ ${p}`}
-                  </button>
-                ))}
+                {plans.length > 0 ? (
+                  plans.map(p => {
+                    const value = p.name.toLowerCase();
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setForm({...form, planType: value})}
+                        className={`py-3 rounded-xl text-center transition-all ${
+                          form.planType === value 
+                            ? 'bg-[#020617] text-white shadow-lg' 
+                            : 'bg-gray-50 text-slate-400 border border-gray-100'
+                        }`}
+                      >
+                        <span className="text-[10px] font-black uppercase tracking-widest block">{p.name}</span>
+                        <span className="text-[9px] font-bold block mt-0.5 opacity-70">
+                           K{p.price}{value.includes('monthly') ? '/mo' : value.includes('annual') ? '/yr' : ''}
+                        </span>
+                      </button>
+                    );
+                  })
+                ) : (
+                  ['free', 'monthly', 'annual'].map(p => (
+                    <button
+                      key={p}
+                      type="button"
+                      className="py-3 rounded-xl text-[10px] font-black uppercase tracking-widest bg-gray-50 text-slate-300 border border-gray-100 opacity-50 cursor-not-allowed"
+                    >
+                      {p === 'free' ? '🔒 Free' : `⭐ ${p}`}
+                    </button>
+                  ))
+                )}
              </div>
           </div>
 

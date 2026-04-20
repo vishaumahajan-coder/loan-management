@@ -164,7 +164,8 @@ export default function AdminReports() {
           <div className="relative z-10">
             <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Recovery Rate</p>
             <h3 className="text-4xl font-black tracking-tight">{data.recoveryRate}%</h3>
-            <p className="text-[10px] text-slate-400 font-bold mt-2">K{data.totalRecovered.toLocaleString()} of K{data.totalDisbursed.toLocaleString()}</p>
+            <p className="text-[10px] text-slate-400 font-bold mt-2">{THEME.formatCurrency(data.totalRecovered)} of {THEME.formatCurrency(data.totalDisbursed)}</p>
+
           </div>
         </div>
         <div className="bg-[#020617] rounded-2xl p-6 text-white relative overflow-hidden">

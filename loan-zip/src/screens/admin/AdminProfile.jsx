@@ -12,7 +12,8 @@ export default function AdminProfile() {
   const [toastMsg, setToastMsg] = useState('');
   const [form, setForm] = useState({
     name: user?.name || '',
-    email: user?.email || 'admin@lendanet.com',
+    email: user?.email || 'admin@gmail.com',
+
     newPassword: '',
     confirmPassword: '',
   });
@@ -40,15 +41,17 @@ export default function AdminProfile() {
 
         <div className="text-center">
           <div className="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-black text-2xl mx-auto mb-3 border-4 border-blue-50/50">
-            {user?.initials || 'S'}
+            {user?.initials || 'A'}
           </div>
+
           <h2 className="text-xl font-black text-gray-900 tracking-tight">{user?.name}</h2>
           <p className="text-blue-600 font-bold text-[11px] uppercase tracking-widest leading-none mt-1">System Administrator</p>
         </div>
-
+ 
         <div className="mt-6 space-y-2 text-left max-w-sm mx-auto">
           {[
-            { icon: Mail, label: 'Email Address', value: user?.email || 'admin@lendanet.com' },
+            { icon: Mail, label: 'Email Address', value: user?.email || 'admin@gmail.com' },
+
             { icon: Shield, label: 'Access Level', value: 'Full System Access' },
             { icon: User, label: 'Username', value: user?.name?.toLowerCase().replace(' ', '.') || 'admin' },
           ].map(({ icon: Icon, label, value }) => (

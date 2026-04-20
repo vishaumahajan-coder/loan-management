@@ -86,7 +86,8 @@ export default function LenderReferrals() {
           
           <div className="bg-white/15 backdrop-blur-xl border border-white/20 rounded-2xl p-5 flex flex-col items-center justify-center text-center min-w-[180px]">
             <p className="text-[10px] uppercase font-bold text-blue-200 tracking-widest mb-1">Total Earned</p>
-            <p className="text-4xl font-black">K{stats.totalEarned}</p>
+            <p className="text-4xl font-black">{THEME.formatCurrency(stats.totalEarned)}</p>
+
             <div className="mt-2 flex items-center gap-1 text-[10px] font-bold text-green-300">
               <Award size={12} />
               Top 5% Referrer

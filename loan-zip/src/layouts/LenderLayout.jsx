@@ -27,7 +27,7 @@ export default function LenderLayout() {
   const { user, logout } = useAuth();
 
   const [search, setSearch] = useState('');
-  const isActive = (p) => location.pathname.startsWith(p);
+  const isActive = (p) => location.pathname === p || location.pathname.startsWith(p + '/');
 
   const handleLogout = () => { logout(); navigate('/login'); setIsSidebarOpen(false); };
 
@@ -60,24 +60,43 @@ export default function LenderLayout() {
           <p className="text-white text-xs font-bold truncate">{user?.name || 'Lender'}</p>
           <p className="text-blue-300 text-[10px] truncate">{user?.businessName || ''}</p>
           <span className={`mt-1 inline-block text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${
-            user?.plan === 'paid'
+            user?.isPaid
               ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
               : 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
-          }`}>{user?.plan === 'paid' ? '⭐ Premium' : '🔒 Free Plan'}</span>
+          }`}>{user?.isPaid ? `⭐ ${user?.plan_label || 'Premium'}` : '🔒 Free Plan'}</span>
         </div>
+
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
         {NAV.map(({ path, label, icon: Icon }) => {
           const active = isActive(path);
-          const isPremiumSearch = path === '/lender/search' && user?.plan === 'free';
+          const isPremiumSearch = path === '/lender/search' && !user?.isPaid;
+          const NavComponent = isPremiumSearch ? 'div' : Link;
+          
           return (
-            <Link
+            <NavComponent
               key={path}
-              to={path}
-              onClick={onLinkClick}
-              className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${
+              to={isPremiumSearch ? undefined : path}
+              onClick={(e) => {
+                if (isPremiumSearch) {
+                  Swal.fire({
+                    title: 'Premium Feature',
+                    text: 'Borrower search is only available for Premium members. Upgrade your plan to unlock this feature!',
+                    icon: 'lock',
+                    confirmButtonText: 'View Plans',
+                    confirmButtonColor: '#3b82f6',
+                    showCancelButton: true,
+                    cancelButtonText: 'Maybe Later'
+                  }).then((result) => {
+                    if (result.isConfirmed) navigate('/lender/profile');
+                  });
+                  return;
+                }
+                onLinkClick();
+              }}
+              className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
                 active
                   ? 'bg-white text-blue-700 shadow-md'
                   : 'text-blue-100 hover:bg-white/10 hover:text-white'
@@ -86,13 +105,13 @@ export default function LenderLayout() {
               <Icon size={18} className={active ? 'text-blue-600' : 'text-blue-300'} />
               <span>{label}</span>
               {isPremiumSearch ? (
-                 <div className="ml-auto bg-yellow-500/20 px-1.5 py-0.5 rounded border border-yellow-500/30 flex items-center">
-                    <Lock size={10} className="text-yellow-400" />
+                 <div className="ml-auto bg-yellow-400 p-1 rounded shadow-sm">
+                    <Lock size={10} className="text-yellow-900" />
                  </div>
               ) : active ? (
                  <ChevronRight size={14} className="ml-auto text-blue-400" />
               ) : null}
-            </Link>
+            </NavComponent>
           );
         })}
       </nav>
@@ -156,12 +175,41 @@ export default function LenderLayout() {
           </div>
           
           <div className="flex items-center gap-2 md:gap-4">
-            <Link to="/lender/search" className="hidden sm:flex items-center gap-2 p-3 bg-slate-50 border border-gray-100 rounded-xl text-slate-400 hover:border-blue-100 transition-all group relative">
+            <div 
+              onClick={() => {
+                if (!user?.isPaid) {
+                  Swal.fire({
+                    title: 'Premium Required',
+                    text: 'Upgrade to Premium to search the borrower network.',
+                    icon: 'lock',
+                    confirmButtonText: 'Upgrade Now'
+                  }).then(r => r.isConfirmed && navigate('/lender/profile'));
+                  return;
+                }
+                navigate('/lender/search');
+              }}
+              className="hidden sm:flex items-center gap-2 p-3 bg-slate-50 border border-gray-100 rounded-xl text-slate-400 hover:border-blue-100 transition-all group relative cursor-pointer"
+            >
                <Search size={16} />
                <span className="text-[10px] font-black uppercase tracking-widest group-hover:text-blue-600 transition-colors">Search Network</span>
-               {user?.plan === 'free' && <div className="absolute -top-1.5 -right-1.5 bg-yellow-400 w-4 h-4 rounded-full flex items-center justify-center border-2 border-white"><Lock size={8} className="text-yellow-900" /></div>}
-            </Link>
-            <button className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-600 border border-gray-100" onClick={() => navigate('/lender/search')}>
+               {!user?.isPaid && <div className="absolute -top-1.5 -right-1.5 bg-yellow-400 w-4 h-4 rounded-full flex items-center justify-center border-2 border-white"><Lock size={8} className="text-yellow-900" /></div>}
+            </div>
+
+            <button 
+              className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-600 border border-gray-100" 
+              onClick={() => {
+                if (!user?.isPaid) {
+                  Swal.fire({
+                    title: 'Premium Required',
+                    text: 'Upgrade to Premium to search the borrower network.',
+                    icon: 'lock',
+                    confirmButtonText: 'Upgrade Now'
+                  }).then(r => r.isConfirmed && navigate('/lender/profile'));
+                  return;
+                }
+                navigate('/lender/search');
+              }}
+            >
                <Search size={20} />
             </button>
             <Link to="/lender/profile" className="flex items-center gap-2 p-1 md:p-1.5 pr-3 md:pr-4 rounded-xl bg-slate-50 border border-gray-100 hover:border-blue-100 transition-all active:scale-95">

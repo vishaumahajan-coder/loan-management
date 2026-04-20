@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Eye, EyeOff, ArrowLeft, Upload, Gift, User, Phone, Mail, Briefcase, Lock, Shield, ChevronRight, CreditCard, Hash, Building, Calendar } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Upload, Gift, User, Phone, Mail, Briefcase, Lock, Shield, ChevronRight, CreditCard, Hash, Building, Calendar, Camera } from 'lucide-react';
 import axios from 'axios';
 import api, { API_BASE_URL } from '../services/api';
 import Swal from 'sweetalert2';
@@ -27,14 +27,18 @@ export default function RegisterScreen() {
   const [error, setError] = useState('');
   const [form, setForm] = useState({
     name: '', phone: '', email: '', password: '', businessName: '', license: null,
+    photo: null, nrc_document: null,
     referralCode: searchParams.get('ref') || '', role: 'lender',
     nrc: '', dob: '', companyRegistrationNumber: '', lenderType: 'individual', planType: 'free',
   });
   const [platformSettings, setPlatformSettings] = useState(null);
 
+  const [membershipPlans, setMembershipPlans] = useState([]);
+
   React.useEffect(() => {
     // Fetch settings on mount
     api.get('/settings').then((res) => setPlatformSettings(res.data)).catch(() => { });
+    api.get('/membership/plans').then((res) => setMembershipPlans(res.data)).catch((err) => console.log('Err plans', err));
   }, []);
 
   const update = (key, val) => setForm(f => ({ ...f, [key]: val }));
@@ -75,22 +79,35 @@ export default function RegisterScreen() {
         formData.append('lenderType', form.lenderType);
         formData.append('planType', form.planType);
         if (form.license) formData.append('license', form.license);
+        if (form.nrc_document) formData.append('nrc_document', form.nrc_document);
+        if (form.photo) formData.append('photo', form.photo);
 
         response = await api.post('/auth/register', formData);
+
+        await Swal.fire({
+          icon: 'success',
+          title: 'Registration Successful!',
+          text: 'Welcome to LendaNet. Your account is being verified.',
+          confirmButtonColor: '#ef4444',
+          confirmButtonText: 'Continue to Verify'
+        });
       } else {
-        // Borrower - Send as JSON for better connectivity since no files are attached
-        const payload = {
-          name: form.name,
-          phone: form.phone,
-          email: form.email,
-          password: form.password,
-          role: form.role,
-          nrc: form.nrc,
-          dob: form.dob,
-          date_of_birth: form.dob,
-          referralCode: form.referralCode
-        };
-        response = await api.post('/auth/register', payload);
+        // Borrower - Send as FormData to include attached files
+        const formData = new FormData();
+        formData.append('name', form.name);
+        formData.append('phone', form.phone);
+        formData.append('email', form.email);
+        formData.append('password', form.password);
+        formData.append('role', form.role);
+        formData.append('nrc', form.nrc);
+        formData.append('dob', form.dob);
+        formData.append('date_of_birth', form.dob);
+        if (form.referralCode) formData.append('referralCode', form.referralCode);
+
+        if (form.photo) formData.append('photo', form.photo);
+        if (form.nrc_document) formData.append('nrc_document', form.nrc_document);
+
+        response = await api.post('/auth/register', formData);
       }
 
       if (form.role === 'borrower') {
@@ -213,6 +230,39 @@ export default function RegisterScreen() {
                   </Field>
                 </div>
 
+                {form.role === 'borrower' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-2">
+                    <div className="group">
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5 px-1">
+                        Borrower Photo
+                      </label>
+                      <label className="flex flex-col items-center justify-center gap-1.5 w-full py-4 bg-white border-2 border-dashed border-gray-100 rounded-2xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all relative overflow-hidden">
+                        <Camera size={20} className="text-gray-400" />
+                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest text-center px-2 truncate w-full">
+                          {form.photo ? form.photo.name : 'Take / Upload Photo'}
+                        </span>
+                        <input type="file" accept="image/*" capture="environment" className="hidden" 
+                          onChange={e => update('photo', e.target.files[0])} />
+                        {form.photo && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
+                      </label>
+                    </div>
+                    <div className="group">
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1.5 px-1">
+                        NRC Document
+                      </label>
+                      <label className="flex flex-col items-center justify-center gap-1.5 w-full py-4 bg-white border-2 border-dashed border-gray-100 rounded-2xl cursor-pointer hover:bg-blue-50 hover:border-blue-300 transition-all relative overflow-hidden">
+                        <Upload size={20} className="text-gray-400" />
+                        <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest text-center px-2 truncate w-full">
+                          {form.nrc_document ? form.nrc_document.name : 'Upload NRC Copy'}
+                        </span>
+                        <input type="file" accept="image/*,.pdf" capture="environment" className="hidden" 
+                          onChange={e => update('nrc_document', e.target.files[0])} />
+                        {form.nrc_document && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />}
+                      </label>
+                    </div>
+                  </div>
+                )}
+
                 {form.role === 'lender' && (
                   <div className="mt-2">
                     <Field label="Company Reg No (if applicable)" icon={Building}>
@@ -249,22 +299,41 @@ export default function RegisterScreen() {
                     <div className="space-y-2">
                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] px-1">Membership Plan</label>
                       <div className="grid grid-cols-3 gap-2">
-                        {[
-                          { value: 'free', label: 'Free', sub: 'K0' },
-                          { value: 'monthly', label: 'Monthly', sub: 'K10/mo' },
-                          { value: 'annual', label: 'Annual', sub: 'K100/yr' },
-                        ].map(p => (
-                          <button key={p.value} type="button"
-                            onClick={() => update('planType', p.value)}
-                            className={`py-3 rounded-2xl text-center transition-all ${form.planType === p.value
-                              ? 'bg-blue-600 text-white shadow-md'
-                              : 'bg-white border border-slate-200 text-gray-400 hover:border-blue-300'
-                              }`}
-                          >
-                            <span className="text-[11px] font-black uppercase tracking-wider block">{p.label}</span>
-                            <span className="text-[9px] font-bold block mt-0.5 opacity-70">{p.sub}</span>
-                          </button>
-                        ))}
+                        {membershipPlans.length > 0 ? (
+                           membershipPlans.map(p => {
+                             const value = p.name.toLowerCase();
+                             const label = p.name;
+                             let subLabel = `K${p.price}`;
+                             if (value.includes('monthly')) subLabel += '/mo';
+                             if (value.includes('annual')) subLabel += '/yr';
+                             
+                             return (
+                               <button key={p.id} type="button"
+                                 onClick={() => update('planType', value)}
+                                 className={`py-3 rounded-2xl text-center transition-all ${form.planType === value
+                                   ? 'bg-blue-600 text-white shadow-md'
+                                   : 'bg-white border border-slate-200 text-gray-400 hover:border-blue-300'
+                                   }`}
+                               >
+                                 <span className="text-[11px] font-black uppercase tracking-wider block">{label}</span>
+                                 <span className="text-[9px] font-bold block mt-0.5 opacity-70">{subLabel}</span>
+                               </button>
+                             );
+                           })
+                        ) : (
+                          [
+                            { value: 'free', label: 'Free', sub: 'K0' },
+                            { value: 'monthly', label: 'Monthly', sub: 'K0' },
+                            { value: 'annual', label: 'Annual', sub: 'K0' },
+                          ].map(p => (
+                            <button key={p.value} type="button"
+                              className="py-3 rounded-2xl text-center bg-white border border-slate-200 text-gray-400 opacity-50 cursor-not-allowed"
+                            >
+                              <span className="text-[11px] font-black uppercase tracking-wider block">{p.label}</span>
+                              <span className="text-[9px] font-bold block mt-0.5 opacity-70">Loading...</span>
+                            </button>
+                          ))
+                        )}
                       </div>
                     </div>
                   </>
@@ -291,28 +360,70 @@ export default function RegisterScreen() {
               <span className="text-blue-500 font-black">NOTE:</span> Password must contain at least 8 characters, one uppercase, one lowercase, and one special character (@#$%^&*).
             </p>
 
-            {/* License Upload */}
+            {/* Photo, License & NRC Upload - Premium Single Row */}
             {form.role === 'lender' && (
-              <div className="group">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-3 px-1">
-                  Lender's License
-                </label>
-                <label className="flex flex-col items-center justify-center gap-3 w-full py-8 bg-blue-50/30 border-2 border-dashed border-blue-100 rounded-3xl cursor-pointer hover:bg-blue-50 hover:border-blue-400 transition-all group/upload relative overflow-hidden">
-                  <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-blue-600 group-hover/upload:scale-110 transition-transform">
-                    <Upload size={24} />
+              <div className="mt-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Your Photo */}
+                  <div className="group">
+                    <label className="flex flex-col items-center justify-center gap-4 w-full py-10 bg-blue-600/5 border-2 border-dashed border-blue-200 rounded-[2rem] cursor-pointer hover:bg-blue-600/10 hover:border-blue-400 transition-all group/upload relative overflow-hidden text-center shadow-sm h-full">
+                      <div className="text-blue-500 group-hover/upload:scale-110 transition-transform">
+                        <Camera size={32} strokeWidth={1.5} />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.12em]">
+                          {form.photo ? 'Photo Ready' : 'Take / Upload Photo'}
+                        </p>
+                        <p className="text-[9px] text-blue-400 font-bold uppercase tracking-wider opacity-60 truncate max-w-[120px] mx-auto">
+                          {form.photo ? form.photo.name : 'Your Photo'}
+                        </p>
+                      </div>
+                      <input type="file" accept="image/*" capture="environment" className="hidden"
+                        onChange={e => update('photo', e.target.files[0])} />
+                      {form.photo && <div className="absolute top-5 right-5 w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-lg" />}
+                    </label>
                   </div>
-                  <div className="text-center">
-                    <p className="text-[11px] font-black text-gray-900 uppercase tracking-wider">
-                      {form.license ? 'Document Selected' : 'Upload Proof of License'}
-                    </p>
-                    <p className="text-[10px] text-gray-400 font-medium mt-1 uppercase tracking-tighter">
-                      {form.license ? form.license.name : 'Image or PDF (Max 5MB)'}
-                    </p>
+
+                  {/* Lender's License */}
+                  <div className="group">
+                    <label className="flex flex-col items-center justify-center gap-4 w-full py-10 bg-blue-600/5 border-2 border-dashed border-blue-200 rounded-[2rem] cursor-pointer hover:bg-blue-600/10 hover:border-blue-400 transition-all group/upload relative overflow-hidden text-center shadow-sm h-full">
+                      <div className="text-blue-500 group-hover/upload:scale-110 transition-transform">
+                        <Upload size={32} strokeWidth={1.5} />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.12em]">
+                          {form.license ? 'License Ready' : 'Upload License'}
+                        </p>
+                        <p className="text-[9px] text-blue-400 font-bold uppercase tracking-wider opacity-60 truncate max-w-[120px] mx-auto">
+                          {form.license ? form.license.name : 'Proof of License'}
+                        </p>
+                      </div>
+                      <input type="file" accept="image/*,.pdf" capture="environment" className="hidden"
+                        onChange={e => update('license', e.target.files[0])} />
+                      {form.license && <div className="absolute top-5 right-5 w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-lg" />}
+                    </label>
                   </div>
-                  <input type="file" accept="image/*,.pdf" capture="environment" className="hidden"
-                    onChange={e => update('license', e.target.files[0])} />
-                  {form.license && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
-                </label>
+
+                  {/* NRC Copy */}
+                  <div className="group">
+                    <label className="flex flex-col items-center justify-center gap-4 w-full py-10 bg-blue-600/5 border-2 border-dashed border-blue-200 rounded-[2rem] cursor-pointer hover:bg-blue-600/10 hover:border-blue-400 transition-all group/upload relative overflow-hidden text-center shadow-sm h-full">
+                      <div className="text-blue-500 group-hover/upload:scale-110 transition-transform">
+                        <Upload size={32} strokeWidth={1.5} />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.12em]">
+                          {form.nrc_document ? 'NRC Ready' : 'Upload NRC Copy'}
+                        </p>
+                        <p className="text-[9px] text-blue-400 font-bold uppercase tracking-wider opacity-60 truncate max-w-[120px] mx-auto">
+                          {form.nrc_document ? form.nrc_document.name : 'NRC Document'}
+                        </p>
+                      </div>
+                      <input type="file" accept="image/*,.pdf" capture="environment" className="hidden"
+                        onChange={e => update('nrc_document', e.target.files[0])} />
+                      {form.nrc_document && <div className="absolute top-5 right-5 w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse shadow-lg" />}
+                    </label>
+                  </div>
+                </div>
               </div>
             )}
 

@@ -16,8 +16,10 @@ const NAV = [
   { path: '/admin/audit',      label: 'Audit Logs',       icon: ClipboardList },
   { path: '/admin/referrals',  label: 'Referral Rules',   icon: Gift },
   { path: '/admin/membership', label: 'Memberships',      icon: Star },
+  { path: '/admin/membership-requests', label: 'Upgrade Requests', icon: Shield },
   { path: '/admin/settings',   label: 'Settings',         icon: Settings },
 ];
+
 
 const C = THEME.role.admin;
 
@@ -28,7 +30,7 @@ export default function AdminLayout() {
   const { user, logout } = useAuth();
   const [search, setSearch] = useState('');
 
-  const isActive = (p) => location.pathname.startsWith(p);
+  const isActive = (p) => location.pathname === p || location.pathname.startsWith(p + '/');
 
   const handleLogout = () => { logout(); navigate('/login'); setIsSidebarOpen(false); };
 

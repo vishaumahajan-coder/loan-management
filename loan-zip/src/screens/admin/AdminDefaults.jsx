@@ -114,7 +114,8 @@ export default function AdminDefaults() {
            </div>
            <div className="relative z-10">
               <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-0.5 leading-none">Unpaid</p>
-              <h3 className="text-xl font-black text-slate-950 leading-none">K{totalExposure.toLocaleString()}</h3>
+              <h3 className="text-xl font-black text-slate-950 leading-none">{THEME.formatCurrency(totalExposure)}</h3>
+
            </div>
            <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
               <Database size={80} strokeWidth={2} />
@@ -183,7 +184,8 @@ export default function AdminDefaults() {
   
               <div className="flex items-center gap-6 relative z-10">
                  <div className="text-right hidden sm:block">
-                    <p className="text-xl font-black text-rose-600 tracking-tight leading-none grayscale group-hover:grayscale-0 transition-all mb-1">K{l.amount.toLocaleString()}</p>
+                    <p className="text-xl font-black text-rose-600 tracking-tight leading-none grayscale group-hover:grayscale-0 transition-all mb-1">{THEME.formatCurrency(l.amount)}</p>
+
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none opacity-80">Rate: {l.interestRate || 0}%</p>
                  </div>
                  <div className="flex items-center gap-2.5">
@@ -206,7 +208,8 @@ export default function AdminDefaults() {
            <div className="space-y-6 pb-2">
               <div className="bg-[#020617] p-8 rounded-2xl text-center relative overflow-hidden group shadow-lg">
                  <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest mb-2 opacity-70 leading-none">Unpaid Amount</p>
-                 <h3 className="text-3xl font-black text-white tracking-tight leading-none group-hover:scale-105 transition-all">K{viewModal.amount.toLocaleString()}</h3>
+                 <h3 className="text-3xl font-black text-white tracking-tight leading-none group-hover:scale-105 transition-all">{THEME.formatCurrency(viewModal.amount)}</h3>
+
                  <p className="text-[10px] font-black text-rose-300 mt-4 uppercase tracking-widest opacity-80">{viewModal.borrowerName}</p>
               </div>
   

@@ -2,7 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreditCard, Activity, CheckCircle, Gift, AlertTriangle, Camera, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { RiskBadge, StatusBadge, StatCard } from '../../components/UI';
+import { StatusBadge, StatCard } from '../../components/UI';
+
 import { THEME } from '../../theme';
 
 import { useEffect, useState } from 'react';
@@ -35,10 +36,8 @@ export default function BorrowerDashboard() {
   const paidLoans    = stats.totalLoans - stats.activeLoans - stats.defaultedLoans;
   const defaults     = stats.defaultedLoans;
   
-  // Use Risk Calculation from Backend
-  const risk = stats.risk || 'GREEN';
-  const score = stats.score || 1400;
-  const riskStyle = THEME.risk[risk] || THEME.risk.GREEN;
+  
+
 
   return (
     <div className="space-y-6">
@@ -65,23 +64,6 @@ export default function BorrowerDashboard() {
         </div>
       )}
 
-      {/* Risk Badge Card */}
-      <div
-        className="rounded-xl p-4 border"
-        style={{ background: riskStyle.bg, borderColor: riskStyle.border }}
-      >
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: riskStyle.text }}>Credit Score Index</p>
-            <h3 className="text-xl font-black mt-1" style={{ color: riskStyle.text }}>
-              {score} — {risk === 'GREEN' ? 'Good standing' : risk === 'AMBER' ? 'Medium Risk' : 'High Risk'}
-            </h3>
-          </div>
-          <div className="w-10 h-10 rounded-full flex items-center justify-center text-xl" style={{ background: riskStyle.badge }}>
-            {risk === 'GREEN' ? '✅' : risk === 'AMBER' ? '⚠️' : '🔴'}
-          </div>
-        </div>
-      </div>
 
       {/* Profile Completion Prompt */}
       {(!stats.profile?.photo_url || !stats.profile?.nrc_url) && (
@@ -153,7 +135,8 @@ export default function BorrowerDashboard() {
               <div key={l.id} className="flex items-center justify-between px-4 py-3.5">
                 <div>
                   <p className="text-xs font-bold text-gray-800">{l.lenderName}</p>
-                  <p className="text-[10px] text-gray-400">Due: {THEME.formatDate(l.due_date)} · K{Number(l.amount).toLocaleString()}</p>
+                  <p className="text-[10px] text-gray-400">Due: {THEME.formatDate(l.due_date)} · {THEME.formatCurrency(l.amount)}</p>
+
                 </div>
                 <StatusBadge status={l.status} />
               </div>
@@ -162,14 +145,6 @@ export default function BorrowerDashboard() {
         )}
       </div>
 
-      {/* Network Note */}
-      <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
-        <span className="text-xl flex-shrink-0">ℹ️</span>
-        <p className="text-xs text-blue-800 font-medium leading-relaxed">
-          Your loan data is visible to participating lenders on the LendaNet network.
-          Your risk score updates automatically when lenders record or update your loans.
-        </p>
-      </div>
     </div>
   );
 }

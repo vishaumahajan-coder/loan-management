@@ -508,7 +508,7 @@ Step 3: Console output check karo:
         - "Renamed Premium to Monthly"
         - "Added nrc_url to users"
         - "Added nrc_url to borrowers"
-        - "Added requested_plan to upgrade_requests"
+        - "Added requested_plan to upgrad
         - "Migration complete!"
 Step 4: Frontend build banao aur deploy karo
 Step 5: Test login karo (admin/lender/borrower)

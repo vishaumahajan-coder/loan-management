@@ -21,6 +21,8 @@ import {
   Database
 } from 'lucide-react';
 import { PageHeader, StatusBadge } from '../../components/UI';
+import { THEME } from '../../theme';
+
 import api from '../../services/api';
 
 export default function AdminReferrals() {
@@ -118,7 +120,8 @@ export default function AdminReferrals() {
             </div>
             <div className="relative z-10">
                <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1 leading-none">Total Bonuses</p>
-               <h3 className="text-2xl font-black text-slate-950 leading-none">K{referrals.reduce((s,r)=>s+r.bonus,0).toLocaleString()}</h3>
+               <h3 className="text-2xl font-black text-slate-950 leading-none">{THEME.formatCurrency(referrals.reduce((s,r)=>s+r.bonus,0))}</h3>
+
             </div>
             <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
                <Target size={100} strokeWidth={2} />
@@ -177,7 +180,8 @@ export default function AdminReferrals() {
                
                <div className="flex items-center gap-10 relative z-10">
                   <div className="text-right hidden sm:block">
-                     <p className="text-2xl font-black text-emerald-600 tracking-tighter leading-none grayscale group-hover:grayscale-0 transition-all mb-1">K{r.bonus}</p>
+                     <p className="text-2xl font-black text-emerald-600 tracking-tighter leading-none grayscale group-hover:grayscale-0 transition-all mb-1">{THEME.formatCurrency(r.bonus)}</p>
+
                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none opacity-80">Bonus Amount</p>
                   </div>
                   <div className="flex items-center gap-4">

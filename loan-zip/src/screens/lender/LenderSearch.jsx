@@ -14,9 +14,11 @@ export default function LenderSearch() {
   const [loading, setLoading]   = useState(false);
   const [viewModal, setViewModal] = useState(null);
   const { user } = useAuth();
-  const isFree = false; 
+  const isFree = !user?.isPaid;
+  const navigate = useNavigate();
 
   const handleSearch = async () => {
+    if (isFree) return;
     if (!query.trim()) return;
     setLoading(true);
     setSearched(false);
@@ -33,7 +35,6 @@ export default function LenderSearch() {
     }
   };
 
-  const navigate = useNavigate();
   const directLend = (borrower) => {
     // Navigate to loans screen and pass borrower data in state
     navigate('/lender/loans', { state: { selectedBorrower: borrower } });
@@ -44,60 +45,103 @@ export default function LenderSearch() {
     <div className="space-y-5">
       <PageHeader title="Network Search" subtitle="Identify borrowers by NRC or Phone" />
 
-      {/* Primary Search Container */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 text-center">
-        <Shield size={32} className="mx-auto mb-4 text-blue-500 opacity-20" />
-        <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest mb-1">Verify Identity</h3>
-        <p className="text-[10px] text-gray-400 font-bold mb-4 uppercase">NRC or Phone Number required for search</p>
-        
-        <div className="flex gap-2 relative">
-          <div className="flex-1 relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSearch()}
-              placeholder="e.g. 100456/11/1"
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-mono focus:ring-2 focus:ring-blue-500 transition-all outline-none"
-            />
-          </div>
-          <button
-            onClick={handleSearch}
-            disabled={loading || !query.trim()}
-            className="px-6 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
-          >
-            {loading ? <Loader size={16} className="animate-spin" /> : 'Search'}
-          </button>
-        </div>
-      </div>
-
-      {/* Results Display */}
-      {searched && (
-        <div className="space-y-3">
-          {results.length === 0 ? (
-            <div className="text-center py-10 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
-               <p className="text-sm font-bold text-gray-400">No network matches found.</p>
+      {isFree ? (
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl p-12 text-center flex flex-col items-center justify-center min-h-[400px] relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl -mr-32 -mt-32 opacity-50 group-hover:bg-blue-100 transition-colors" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-yellow-50 rounded-full blur-3xl -ml-32 -mb-32 opacity-50 group-hover:bg-yellow-100 transition-colors" />
+          
+          <div className="relative z-10">
+            <div className="w-24 h-24 rounded-[2rem] bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white shadow-2xl mb-8 mx-auto transform rotate-3 hover:rotate-0 transition-transform duration-500">
+               <Lock size={44} strokeWidth={2.5} />
             </div>
-          ) : (
-            results.map(b => (
-              <div key={b.id} 
-                onClick={() => setViewModal(b)}
-                className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between cursor-pointer hover:border-blue-200 transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xs">
-                    {b.name.split(' ').map(n=>n[0]).join('')}
-                  </div>
-                  <div>
-                    <p className="text-sm font-black text-gray-900">{b.name}</p>
-                    <p className="text-[9px] font-mono text-gray-400 capitalize">{b.nrc} • Born: {THEME.formatDate(THEME.getDOB(b))}</p>
-                  </div>
+            
+            <div className="space-y-4 max-w-sm mx-auto">
+              <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter leading-tight">
+                Premium Search <span className="text-blue-600">Locked</span>
+              </h2>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                Network search is a <span className="text-blue-500">premium-only</span> feature. Upgrade to unlock full access to the borrower network.
+              </p>
+              
+              <div className="pt-6 flex flex-col gap-3">
+                <button 
+                  onClick={() => navigate('/lender/profile')}
+                  className="w-full py-4 bg-[#020617] text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-blue-600 transition-all active:scale-95"
+                >
+                  Unlock Premium Now
+                </button>
+                <div className="flex items-center justify-center gap-6 mt-4">
+                   <div className="flex items-center gap-2">
+                      <Shield size={14} className="text-emerald-500" />
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Risk Rating</span>
+                   </div>
+                   <div className="flex items-center gap-2">
+                      <AlertTriangle size={14} className="text-emerald-500" />
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Default Records</span>
+                   </div>
                 </div>
-                <ChevronRight size={16} className="text-gray-300" />
               </div>
-            ))
-          )}
+            </div>
+          </div>
         </div>
+      ) : (
+        <>
+          {/* Primary Search Container */}
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 text-center">
+            <Shield size={32} className="mx-auto mb-4 text-blue-500 opacity-20" />
+            <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest mb-1">Verify Identity</h3>
+            <p className="text-[10px] text-gray-400 font-bold mb-4 uppercase">NRC or Phone Number required for search</p>
+            
+            <div className="flex gap-2 relative">
+              <div className="flex-1 relative">
+                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                  value={query}
+                  onChange={e => setQuery(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSearch()}
+                  placeholder="e.g. 100456/11/1"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl text-sm font-mono focus:ring-2 focus:ring-blue-500 transition-all outline-none"
+                />
+              </div>
+              <button
+                onClick={handleSearch}
+                disabled={loading || !query.trim()}
+                className="px-6 py-3 bg-blue-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {loading ? <Loader size={16} className="animate-spin" /> : 'Search'}
+              </button>
+            </div>
+          </div>
+
+          {/* Results Display */}
+          {searched && (
+            <div className="space-y-3">
+              {results.length === 0 ? (
+                <div className="text-center py-10 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                   <p className="text-sm font-bold text-gray-400">No network matches found.</p>
+                </div>
+              ) : (
+                results.map(b => (
+                  <div key={b.id} 
+                    onClick={() => setViewModal(b)}
+                    className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between cursor-pointer hover:border-blue-200 transition-all"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xs">
+                        {b.name.split(' ').map(n=>n[0]).join('')}
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-gray-900">{b.name}</p>
+                        <p className="text-[9px] font-mono text-gray-400 capitalize">{b.nrc} • Born: {THEME.formatDate(THEME.getDOB(b))}</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={16} className="text-gray-300" />
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </>
       )}
 
       {/* Profile/Compliance Modal */}
@@ -170,7 +214,8 @@ export default function LenderSearch() {
                       <div key={idx} className="p-4 border border-red-100 rounded-2xl bg-red-50/30">
                          <div className="flex justify-between items-start">
                            <div>
-                             <p className="text-sm font-black text-gray-800">K{(d.amount || 0).toLocaleString()}</p>
+                             <p className="text-sm font-black text-gray-800">{THEME.formatCurrency(d.amount || 0)}</p>
+
                              <p className="text-[10px] text-gray-500 font-bold uppercase">{d.type} • ID: {d.loan_id}</p>
                            </div>
                           {d.type === 'Collateral' && (

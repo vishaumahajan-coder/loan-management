@@ -120,7 +120,7 @@ export default function AdminBorrowers() {
                 <th className="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">NRC Number</th>
                 <th className="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Verification</th>
                 <th className="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Risk Level</th>
-                <th className="px-6 py-4 text-left text-[9px] font-black text-slate-400 uppercase tracking-widest">Score</th>
+
                 <th className="px-6 py-4 text-right text-[9px] font-black text-slate-400 uppercase tracking-widest">Operations</th>
               </tr>
             </thead>
@@ -153,9 +153,7 @@ export default function AdminBorrowers() {
                   <td className="px-6 py-4 text-sm scale-90 origin-left">
                     <RiskBadge risk={b.risk} />
                   </td>
-                  <td className="px-6 py-4 text-left">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{b.score || '--'} pts</span>
-                  </td>
+
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                        <button 
@@ -205,7 +203,7 @@ export default function AdminBorrowers() {
                  { icon: Phone, label: 'Phone', value: viewModal.phone, color: 'text-blue-500' },
                  { icon: Calendar, label: 'Date of Birth', value: THEME.formatDate(THEME.getDOB(viewModal)), color: 'text-emerald-500' },
                  { icon: MapPin, label: 'Location', value: 'Lusaka', color: 'text-indigo-500' },
-                 { icon: Activity, label: 'Loans', value: `${viewModal.totalLoans} Paid`, color: 'text-amber-500' },
+                 { icon: Activity, label: 'Total Loans', value: `${viewModal.totalLoans || 0} Records`, color: 'text-amber-500' },
                ].map((item, i) => (
                  <div key={i} className="flex flex-col gap-1 p-4 bg-gray-50 rounded-2xl border border-gray-100">
                     <div className="flex items-center gap-2 mb-0.5">
@@ -216,6 +214,47 @@ export default function AdminBorrowers() {
                  </div>
                ))}
             </div>
+
+            {/* Verification Documents Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="p-4 bg-gray-50 rounded-3xl border border-gray-100">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Borrower Photo</p>
+                  <div className="w-full h-48 rounded-2xl bg-white border border-gray-100 overflow-hidden flex items-center justify-center">
+                     {viewModal.photo_url ? (
+                        <img src={api.defaults.baseURL.replace('/api', '') + viewModal.photo_url} className="w-full h-full object-cover" alt="Borrower" />
+                     ) : (
+                        <div className="flex flex-col items-center gap-2 text-slate-300">
+                           <User size={32} />
+                           <span className="text-[10px] font-bold uppercase">No Photo</span>
+                        </div>
+                     )}
+                  </div>
+               </div>
+               <div className="p-4 bg-gray-50 rounded-3xl border border-gray-100">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">NRC Document</p>
+                  <div className="w-full h-48 rounded-2xl bg-white border border-gray-100 overflow-hidden flex items-center justify-center relative group">
+                     {viewModal.nrc_url ? (
+                        <>
+                           <img src={api.defaults.baseURL.replace('/api', '') + viewModal.nrc_url} className="w-full h-full object-contain" alt="NRC" />
+                           <a 
+                              href={api.defaults.baseURL.replace('/api', '') + viewModal.nrc_url} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                           >
+                              <span className="px-4 py-2 bg-white text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest">View Full</span>
+                           </a>
+                        </>
+                     ) : (
+                        <div className="flex flex-col items-center gap-2 text-slate-300">
+                           <Database size={32} />
+                           <span className="text-[10px] font-bold uppercase">No NRC Attached</span>
+                        </div>
+                     )}
+                  </div>
+               </div>
+            </div>
+
 
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col mt-4">
                <div className="p-4 border-b border-gray-100 bg-slate-50 flex items-center justify-between">
@@ -246,7 +285,8 @@ export default function AdminBorrowers() {
                                 </td>
                                 <td className="px-4 py-3">
                                    <div className="flex flex-col">
-                                      <span className="text-[11px] font-black text-slate-900">K{Number(loan.amount).toLocaleString()}</span>
+                                      <span className="text-[11px] font-black text-slate-900">{THEME.formatCurrency(loan.amount)}</span>
+
                                       <span className="text-[9px] text-slate-400 font-bold uppercase">Rate: {loan.interest_rate}%</span>
                                    </div>
                                 </td>

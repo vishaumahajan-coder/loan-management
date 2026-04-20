@@ -6,8 +6,11 @@ import { DEMO_CREDENTIALS } from '../theme';
 import Swal from 'sweetalert2';
 
 const ROLE_ICONS = {
-  lender: <div className="w-12 h-12 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-xl shadow-sm border border-emerald-100 group-hover:scale-110 transition-transform"><Building2 size={24} /></div>,
+
   admin: <div className="w-12 h-12 flex items-center justify-center bg-rose-50 text-rose-600 rounded-xl shadow-sm border border-rose-100 group-hover:scale-110 transition-transform"><ShieldCheck size={24} /></div>,
+
+  lender: <div className="w-12 h-12 flex items-center justify-center bg-emerald-50 text-emerald-600 rounded-xl shadow-sm border border-emerald-100 group-hover:scale-110 transition-transform"><Building2 size={24} /></div>,
+  
   borrower: <div className="w-12 h-12 flex items-center justify-center bg-slate-50 text-slate-500 rounded-xl shadow-sm border border-slate-100 group-hover:scale-110 transition-transform"><User size={24} /></div>
 };
 
@@ -18,22 +21,47 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [identifierError, setIdentifierError] = useState('');
   const [loading, setLoading] = useState(false);
+
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    setError('');
+    setPasswordError('');
+    setIdentifierError('');
+
+    if (!identifier.trim()) {
+      setLoading(false);
+      setIdentifierError('Email or Phone number is required');
+      return;
+    }
+
+
+    // Password Strength Check
+    const passRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,}$/;
+    if (!passRegex.test(password)) {
+      setLoading(false);
+      setPasswordError('Password must contain at least 8 characters, one uppercase, one lowercase, and one special character (@#$%^&*).');
+      return;
+    }
 
     try {
       const result = await login(identifier.trim(), password);
+
       if (result.success) {
         if (result.role === 'admin') navigate('/admin/dashboard');
         else if (result.role === 'lender') navigate('/lender/dashboard');
         else navigate('/borrower/dashboard');
       } else {
-        const errorMsg = 'Invalid credentials. Check the demo roles below.';
+        const errorMsg = result.message || 'Invalid credentials. Please check your email and password.';
+        setIdentifierError('Check your email or phone number');
+        setPasswordError('Check your password');
         setError(errorMsg);
+        // We can keep the SweetAlert as secondary feedback or remove it
         Swal.fire({
           icon: 'error',
           title: 'Login Failed',
@@ -43,7 +71,9 @@ export default function LoginScreen() {
       }
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Login failed. Please try again.';
+      setIdentifierError('Account error');
       setError(errorMsg);
+
       Swal.fire({
         icon: 'error',
         title: 'Connectivity Issue',
@@ -59,7 +89,11 @@ export default function LoginScreen() {
     setIdentifier(cred.email || cred.phone || '');
     setPassword(cred.password);
     setError('');
+    setPasswordError('');
+    setIdentifierError('');
   };
+
+
 
   return (
     <div className="h-screen w-full bg-white flex flex-col lg:flex-row font-['Outfit'] overflow-hidden">
@@ -165,13 +199,22 @@ export default function LoginScreen() {
               <input
                 type="text"
                 value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                onChange={(e) => {
+                  setIdentifier(e.target.value);
+                  if (identifierError) setIdentifierError('');
+                }}
                 placeholder="Email or Phone Number"
-                className="w-full px-5 py-2.5 bg-[#F8FAFC] border border-gray-100 rounded-xl text-[13px] font-bold text-gray-900
-                  focus:outline-none focus:border-[#1D58FF] focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
+                className={`w-full px-5 py-2.5 bg-[#F8FAFC] border rounded-xl text-[13px] font-bold text-gray-900
+                  focus:outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-none ${identifierError ? 'border-red-500' : 'border-gray-100 focus:border-[#1D58FF]'}`}
                 required
               />
+              {identifierError && (
+                <p className="text-[10px] text-red-500 font-bold px-1 mt-1.5 leading-relaxed animate-shake">
+                  {identifierError}
+                </p>
+              )}
             </div>
+
 
             <div className="group relative">
               <label className="block text-[9px] font-black text-gray-500 uppercase tracking-[0.2em] mb-1.5 px-1 group-focus-within:text-[#1D58FF] transition-colors">
@@ -181,10 +224,13 @@ export default function LoginScreen() {
                 <input
                   type={showPass ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (passwordError) setPasswordError('');
+                  }}
                   placeholder="••••••••"
-                  className="w-full px-5 py-2.5 bg-[#F8FAFC] border border-gray-100 rounded-xl text-[13px] font-bold text-gray-900
-                     focus:outline-none focus:border-[#1D58FF] focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-none"
+                  className={`w-full px-5 py-2.5 bg-[#F8FAFC] border rounded-xl text-[13px] font-bold text-gray-900
+                     focus:outline-none focus:bg-white focus:ring-4 focus:ring-blue-500/5 transition-all outline-none ${passwordError ? 'border-red-500' : 'border-gray-100 focus:border-[#1D58FF]'}`}
                   required
                 />
                 <button
@@ -195,7 +241,13 @@ export default function LoginScreen() {
                   {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {passwordError && (
+                <p className="text-[10px] text-red-500 font-bold px-1 mt-1.5 leading-relaxed animate-shake">
+                  {passwordError}
+                </p>
+              )}
             </div>
+
             <p className="text-[10px] text-gray-500 font-bold px-1 mt-1 leading-relaxed">
               <span className="text-blue-500 font-black">NOTE:</span> Password must contain at least 8 characters, one uppercase, one lowercase, and one special character (@#$%^&*).
             </p>

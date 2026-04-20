@@ -48,10 +48,13 @@ export default function LenderLoans() {
       try {
          const response = await api.get('/loans');
          setLoans(response.data);
+         return response.data;
       } catch (error) {
          console.error('Failed to fetch loans', error);
+         return null;
       }
    };
+
 
    const fetchBorrowers = async () => {
       try {
@@ -171,8 +174,14 @@ export default function LenderLoans() {
             installmentId
          });
          alert('Payment recorded successfully! ✅');
-         fetchLoans();
-         setViewModal(null);
+         const updatedLoans = await fetchLoans();
+         if (updatedLoans) {
+            const freshData = updatedLoans.find(l => l.id === loanId);
+            if (freshData) setViewModal(freshData);
+         } else {
+            setViewModal(null);
+         }
+
       } catch (error) {
          console.error('Failed to record payment', error);
          alert(error.response?.data?.message || 'Failed to record payment');
@@ -201,8 +210,14 @@ export default function LenderLoans() {
             installmentId
          });
          alert('Payment reversed successfully! 🔄');
-         await fetchLoans();
-         setViewModal(null);
+         const updatedLoans = await fetchLoans();
+         if (updatedLoans) {
+            const freshData = updatedLoans.find(l => l.id === loanId);
+            if (freshData) setViewModal(freshData);
+         } else {
+            setViewModal(null);
+         }
+
       } catch (error) {
          console.error('Failed to reverse payment', error);
          alert(error.response?.data?.message || 'Failed to reverse payment');
@@ -231,7 +246,8 @@ export default function LenderLoans() {
                </div>
                <div>
                   <p className="text-xs text-gray-500 font-medium">Total Lent</p>
-                  <h3 className="text-xl font-bold text-gray-900 leading-none mt-1">K{loans.reduce((s, l) => s + Number(l.amount || 0), 0).toLocaleString()}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 leading-none mt-1">{THEME.formatCurrency(loans.reduce((s, l) => s + Number(l.amount || 0), 0))}</h3>
+
                </div>
             </div>
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-5">
@@ -290,7 +306,8 @@ export default function LenderLoans() {
 
                   <div className="flex items-center gap-8">
                      <div className="text-right hidden sm:block">
-                        <p className="text-base font-bold text-gray-900">K{l.amount.toLocaleString()}</p>
+                        <p className="text-base font-bold text-gray-900">{THEME.formatCurrency(l.amount)}</p>
+
                         <p className="text-[10px] text-gray-400 font-bold uppercase mt-0.5">Amount</p>
                      </div>
                      <div className="flex items-center gap-4">
@@ -387,12 +404,14 @@ export default function LenderLoans() {
                      <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex justify-between items-center">
                         <div>
                            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none">Total Payable</p>
-                           <h4 className="text-lg font-black text-blue-900 mt-1">K{(Number(newLoan.amount) + (Number(newLoan.amount) * (Number(newLoan.interestRate) || 0) / 100)).toLocaleString()}</h4>
+                           <h4 className="text-lg font-black text-blue-900 mt-1">{THEME.formatCurrency(Number(newLoan.amount) + (Number(newLoan.amount) * (Number(newLoan.interestRate) || 0) / 100))}</h4>
                         </div>
+
                         <div className="text-right">
                            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none">Per Month</p>
-                           <h4 className="text-sm font-black text-blue-900 mt-1">K{Math.ceil((Number(newLoan.amount) + (Number(newLoan.amount) * (Number(newLoan.interestRate) || 0) / 100)) / (Number(newLoan.instalments) || 1)).toLocaleString()}</h4>
+                           <h4 className="text-sm font-black text-blue-900 mt-1">{THEME.formatCurrency(Math.ceil((Number(newLoan.amount) + (Number(newLoan.amount) * (Number(newLoan.interestRate) || 0) / 100)) / (Number(newLoan.instalments) || 1)))}</h4>
                         </div>
+
                      </div>
                   )}
 
@@ -494,18 +513,20 @@ export default function LenderLoans() {
                         <div className="absolute inset-0 bg-blue-900/10 blur-3xl group-hover:bg-blue-900/20 transition-all"></div>
                         <div className="relative z-10 flex flex-col items-center">
                            <p className="text-[9px] font-black text-blue-400/60 uppercase tracking-widest mb-1.5 leading-none">Total Outstanding</p>
-                           <h3 className="text-3xl font-black tracking-tight leading-none mb-4 italic">K{remaining.toLocaleString()}</h3>
+                           <h3 className="text-3xl font-black tracking-tight leading-none mb-4 italic">{THEME.formatCurrency(remaining)}</h3>
+
 
                            <div className="flex gap-2">
                               <div className="px-3 py-1.5 bg-white/5 border border-white/5 rounded-full flex flex-col items-center min-w-[80px]">
-                                 <p className="text-white text-[11px] font-black leading-none">K{totalRecovered.toLocaleString()}</p>
+                                 <p className="text-white text-[11px] font-black leading-none">{THEME.formatCurrency(totalRecovered)}</p>
                                  <p className="text-[7px] text-blue-400 font-bold uppercase tracking-widest mt-1">Recovered</p>
                               </div>
                               <div className="px-3 py-1.5 bg-white/5 border border-white/5 rounded-full flex flex-col items-center min-w-[80px]">
-                                 <p className="text-blue-300 text-[11px] font-black leading-none">K{viewModal.amount.toLocaleString()}</p>
+                                 <p className="text-blue-300 text-[11px] font-black leading-none">{THEME.formatCurrency(viewModal.amount)}</p>
                                  <p className="text-[7px] text-blue-400 font-bold uppercase tracking-widest mt-1">Initial</p>
                               </div>
                            </div>
+
                         </div>
                      </div>
 
@@ -536,7 +557,8 @@ export default function LenderLoans() {
                                              </span>
                                           </td>
                                           <td className="px-4 py-4">
-                                             <p className={`text-sm font-black italic tracking-tighter ${isOverdue ? 'text-red-900' : 'text-slate-950'}`}>K{Number(ins.amount).toLocaleString()}</p>
+                                             <p className={`text-sm font-black italic tracking-tighter ${isOverdue ? 'text-red-900' : 'text-slate-950'}`}>{THEME.formatCurrency(ins.amount)}</p>
+
                                           </td>
                                           <td className="px-4 py-4 text-center">
                                              {ins.status === 'pending' ? (

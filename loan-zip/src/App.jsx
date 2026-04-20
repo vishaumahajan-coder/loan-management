@@ -31,7 +31,9 @@ import AdminAudit       from './screens/admin/AdminAudit';
 import AdminProfile     from './screens/admin/AdminProfile';
 import AdminReferrals   from './screens/admin/AdminReferrals';
 import AdminMembership  from './screens/admin/AdminMembership';
+import AdminMembershipRequests from './screens/admin/AdminMembershipRequests';
 import AdminSettings    from './screens/admin/AdminSettings';
+
 
 // Borrower screens
 import BorrowerDashboard from './screens/borrower/BorrowerDashboard';
@@ -97,7 +99,9 @@ function AppRoutes() {
         <Route path="profile"           element={<AdminProfile />} />
         <Route path="referrals"         element={<AdminReferrals />} />
         <Route path="membership"        element={<AdminMembership />} />
+        <Route path="membership-requests" element={<AdminMembershipRequests />} />
         <Route path="settings"          element={<AdminSettings />} />
+
       </Route>
 
       {/* ── Borrower ── */}

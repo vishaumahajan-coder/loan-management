@@ -182,7 +182,8 @@ export default function AdminLoans() {
            </div>
            <div className="relative z-10">
               <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest mb-1 leading-none">Total Portfolio</p>
-              <h3 className="text-xl font-black text-slate-950 tracking-tighter leading-none">K{totalValue.toLocaleString()}</h3>
+              <h3 className="text-xl font-black text-slate-950 tracking-tighter leading-none">{THEME.formatCurrency(totalValue)}</h3>
+
            </div>
            <div className="absolute -right-4 -bottom-4 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
               <Globe size={80} strokeWidth={2} />
@@ -268,7 +269,8 @@ export default function AdminLoans() {
 
               <div className="flex items-center gap-8">
                  <div className="text-right hidden sm:block">
-                    <p className="text-lg font-black text-slate-950 tracking-tight leading-none grayscale group-hover:grayscale-0 transition-all mb-1">K{Number(l.amount).toLocaleString()}</p>
+                    <p className="text-lg font-black text-slate-950 tracking-tight leading-none grayscale group-hover:grayscale-0 transition-all mb-1">{THEME.formatCurrency(l.amount)}</p>
+
                     <p className="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-none opacity-80">Loan Amount</p>
                  </div>
                  <div className="flex items-center gap-5">
@@ -290,10 +292,12 @@ export default function AdminLoans() {
                   <Zap size={24} className="group-hover:scale-110 transition-transform" />
                </div>
                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1 opacity-70 leading-none">Total Loan Value</p>
-               <h3 className="text-2xl font-black tracking-tight leading-none group-hover:scale-105 transition-all duration-500">K{viewModal.amount.toLocaleString()}</h3>
+               <h3 className="text-2xl font-black tracking-tight leading-none group-hover:scale-105 transition-all duration-500">{THEME.formatCurrency(viewModal.amount)}</h3>
+
                
                <div className="flex gap-3 mt-3 text-[9px] font-black uppercase tracking-widest">
-                  <span className="text-blue-300/60">PRIN: K{(viewModal.principal || viewModal.amount).toLocaleString()}</span>
+                  <span className="text-blue-300/60">PRIN: {THEME.formatCurrency(viewModal.principal || viewModal.amount)}</span>
+
                   <span className="text-white/40">•</span>
                   <span className="text-emerald-400">INT: {viewModal.interestRate || 0}%</span>
                </div>
@@ -316,7 +320,8 @@ export default function AdminLoans() {
                               {ins.id}
                             </div>
                             <div>
-                              <p className={`text-sm font-black tracking-tight leading-none transition-colors uppercase ${isOverdue ? 'text-red-900 font-black italic' : 'text-slate-950 group-hover/item:text-blue-600'}`}>K{ins.amount}</p>
+                              <p className={`text-sm font-black tracking-tight leading-none transition-colors uppercase ${isOverdue ? 'text-red-900 font-black italic' : 'text-slate-950 group-hover/item:text-blue-600'}`}>{THEME.formatCurrency(ins.amount)}</p>
+
                               <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isOverdue ? 'text-red-400' : 'text-slate-400'}`}>Due Date: {THEME.formatDate(ins.dueDate || ins.due_date)}</p>
                             </div>
                          </div>
@@ -413,11 +418,13 @@ export default function AdminLoans() {
                   <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex justify-between items-center">
                      <div>
                         <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none">Total Payable</p>
-                        <h4 className="text-lg font-black text-blue-900 mt-1">K{(Number(newLoan.amount) + (Number(newLoan.amount) * (Number(newLoan.interestRate) || 0) / 100)).toLocaleString()}</h4>
+                        <h4 className="text-lg font-black text-blue-900 mt-1">{THEME.formatCurrency(Number(newLoan.amount) + (Number(newLoan.amount) * (Number(newLoan.interestRate) || 0) / 100))}</h4>
+
                      </div>
                      <div className="text-right">
                         <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none">Per Month</p>
-                        <h4 className="text-sm font-black text-blue-900 mt-1">K{Math.ceil((Number(newLoan.amount) + (Number(newLoan.amount) * (Number(newLoan.interestRate) || 0) / 100)) / (Number(newLoan.instalments) || 1)).toLocaleString()}</h4>
+                        <h4 className="text-sm font-black text-blue-900 mt-1">{THEME.formatCurrency(Math.ceil((Number(newLoan.amount) + (Number(newLoan.amount) * (Number(newLoan.interestRate) || 0) / 100)) / (Number(newLoan.instalments) || 1)))}</h4>
+
                      </div>
                   </div>
                )}

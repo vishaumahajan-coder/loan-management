@@ -20,7 +20,7 @@ export default function BorrowerLayout() {
   const navigate  = useNavigate();
   const { user, logout } = useAuth();
 
-  const isActive = (p) => location.pathname.startsWith(p);
+  const isActive = (p) => location.pathname === p || location.pathname.startsWith(p + '/');
   const handleLogout = () => { logout(); navigate('/login'); setIsSidebarOpen(false); };
 
   const SidebarContent = ({ onLinkClick }) => (

@@ -25,7 +25,9 @@ import Modal from '../../components/Modal';
 import { useAuth } from '../../context/AuthContext';
 import { THEME } from '../../theme';
 
-const EMPTY_FORM = { name: '', nrc: '', phone: '', dob: '' };
+const EMPTY_FORM = { name: '', nrc: '', phone: '', email: '', dob: '', password: '' };
+
+
 
 export default function LenderBorrowers() {
   const navigate = useNavigate();
@@ -99,12 +101,42 @@ export default function LenderBorrowers() {
     if (!f.name?.trim())  e.name  = 'Name required';
     if (!f.nrc?.trim())   e.nrc   = 'NRC required';
     if (!f.phone?.trim()) e.phone = 'Phone required';
+    if (!f.email?.trim()) e.email = 'Email required';
+    else if (!/^\S+@\S+\.\S+$/.test(f.email)) e.email = 'Invalid email format';
+    
     if (!f.dob)          e.dob   = 'Date of birth required';
+    
+    // Password Strength Check
+    if (!f.password?.trim()) {
+        e.password = 'Password required';
+    } else {
+        const p = f.password;
+        if (p.length < 8) e.password = 'Must be at least 8 characters';
+        else if (!/[A-Z]/.test(p)) e.password = 'Must have one uppercase letter';
+        else if (!/[a-z]/.test(p)) e.password = 'Must have one lowercase letter';
+        else if (!/[!@#$%^&*]/.test(p)) e.password = 'Must have one special character (@#$%^&*)';
+    }
     return e;
+
+
   };
 
   const openAdd = () => { setForm(EMPTY_FORM); setErrors({}); setPhotoFile(null); setNrcFile(null); setAddModal(true); };
-  const openEdit = (b) => { setForm({ name: b.name, nrc: b.nrc, phone: b.phone, dob: b.dob }); setErrors({}); setEditModal(b); };
+  const openEdit = (b) => { 
+    setForm({ 
+      name: b.name || '', 
+      nrc: b.nrc || '', 
+      phone: b.phone || '', 
+      email: b.email || '', 
+      dob: b.dob ? b.dob.split('T')[0] : '',
+      password: '' 
+    }); 
+    setErrors({}); 
+    setPhotoFile(null);
+    setNrcFile(null);
+    setEditModal(b); 
+  };
+
 
   const handleAdd = async () => {
     const e = validate(form);
@@ -119,6 +151,10 @@ export default function LenderBorrowers() {
         formData.append('dob', form.dob);
         formData.append('date_of_birth', form.dob);
       }
+      if (form.password) formData.append('password', form.password);
+      if (form.email)    formData.append('email',    form.email);
+
+
       if (photoFile) formData.append('photo', photoFile);
       if (nrcFile) formData.append('nrc_document', nrcFile);
 
@@ -148,18 +184,41 @@ export default function LenderBorrowers() {
 
   const handleEdit = async () => {
     const e = validate(form);
+    // Password is optional for edit modal
+    if (!form.password?.trim()) delete e.password; 
+
     if (Object.keys(e).length) { setErrors(e); return; }
+
     try {
-      await api.put(`/borrowers/${editModal.id}`, form);
+      setLoading(true);
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('nrc', form.nrc);
+      formData.append('phone', form.phone);
+      formData.append('email', form.email);
+      if (form.dob) formData.append('dob', form.dob);
+      if (form.password) formData.append('password', form.password);
+
+      if (photoFile) formData.append('photo', photoFile);
+      if (nrcFile) formData.append('nrc_document', nrcFile);
+
+      await api.put(`/borrowers/${editModal.id}`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setEditModal(null);
-      showToast('Borrower updated successfully');
+      setPhotoFile(null);
+      setNrcFile(null);
+      showToast('Borrower profile updated successfully');
       fetchBorrowers();
     } catch (error) {
       showToast(error.response?.data?.message || 'Error updating borrower');
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
+
     try {
       await api.delete(`/borrowers/${id}`);
       setDeleteConfirm(null);
@@ -254,7 +313,7 @@ export default function LenderBorrowers() {
                 ) : (
                   <div className="flex flex-col items-end gap-1">
                     <RiskBadge risk={b.risk} />
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter leading-none">{b.score || '--'} pts</span>
+
                   </div>
                 )}
              </div>
@@ -375,7 +434,8 @@ export default function LenderBorrowers() {
                       {loans.filter(l => l.status === 'defaulted' || l.status === 'overdue').map(l => (
                         <div key={l.id} className="p-5 bg-red-50/50 border border-red-100 rounded-3xl flex justify-between items-center group hover:bg-red-50 transition-all">
                            <div>
-                              <p className="text-base font-black italic text-red-950 leading-none">K{l.amount.toLocaleString()}</p>
+                              <p className="text-base font-black italic text-red-950 leading-none">{THEME.formatCurrency(l.amount)}</p>
+
                               <p className="text-[9px] text-red-400 font-bold uppercase mt-2 tracking-widest">{l.loanType} • ID: {l.id}</p>
                            </div>
                            <div className="px-2.5 py-1 bg-red-500 text-white rounded-lg text-[8px] font-black uppercase tracking-widest shadow-md shadow-red-500/20">DEFAULT</div>
@@ -408,8 +468,33 @@ export default function LenderBorrowers() {
                </div>
                <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">NRC Number</label>
-                  <input className="w-full px-4 py-2.5 border border-gray-100 bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={form.nrc} onChange={e=>setForm({...form, nrc: e.target.value})} placeholder="000000/00/1" />
+                  <input className={`w-full px-4 py-2.5 border bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all ${errors.nrc ? 'border-red-500' : 'border-gray-100'}`} value={form.nrc} onChange={e=>setForm({...form, nrc: e.target.value})} placeholder="000000/00/1" />
+                  {errors.nrc && <p className="text-[8px] text-red-500 font-bold ml-1">{errors.nrc}</p>}
                </div>
+               <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Account Password (for borrower login)</label>
+                  <input 
+                     type="password"
+                     className={`w-full px-4 py-2.5 border bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all ${errors.password ? 'border-red-500' : 'border-gray-100'}`} 
+                     value={form.password} 
+                     onChange={e=>setForm({...form, password: e.target.value})} 
+                     placeholder="8+ chars, A-Z, a-z, @#$..." 
+                  />
+                  {errors.password && <p className="text-[8px] text-red-500 font-bold ml-1">{errors.password}</p>}
+               </div>
+
+               <div className="space-y-1">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Email Address</label>
+                  <input 
+                     className={`w-full px-4 py-2.5 border bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all ${errors.email ? 'border-red-500' : 'border-gray-100'}`} 
+                     value={form.email} 
+                     onChange={e=>setForm({...form, email: e.target.value})} 
+                     placeholder="borrower@example.com" 
+                  />
+                  {errors.email && <p className="text-[8px] text-red-500 font-bold ml-1">{errors.email}</p>}
+               </div>
+
+
                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Phone Number</label>
@@ -455,33 +540,91 @@ export default function LenderBorrowers() {
       </Modal>
 
       <Modal isOpen={!!editModal} onClose={() => setEditModal(null)} title="Edit Borrower Profile">
-         <div className="space-y-4">
-            <div className="p-3 bg-slate-50 rounded-2xl space-y-3">
-               <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
-                  <input className="w-full px-4 py-2.5 border border-gray-100 bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={form.name} onChange={e=>setForm({...form, name: e.target.value})} />
-               </div>
-               <div className="space-y-1">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">NRC Number</label>
-                  <input className="w-full px-4 py-2.5 border border-gray-100 bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={form.nrc} onChange={e=>setForm({...form, nrc: e.target.value})} />
-               </div>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
-                     <input className="w-full px-4 py-2.5 border border-gray-100 bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={form.phone} onChange={e=>setForm({...form, phone: e.target.value})} />
-                  </div>
-                  <div className="space-y-1">
-                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date of Birth</label>
-                     <input type="date" className="w-full px-4 py-2.5 border border-gray-100 bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={form.dob} onChange={e=>setForm({...form, dob: e.target.value})} />
-                  </div>
-               </div>
-            </div>
-            <div className="flex gap-3 pt-1">
-               <button onClick={handleEdit} className="flex-1 py-3 bg-amber-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md active:scale-95 transition-all">Save Changes</button>
-               <button onClick={()=>setEditModal(null)} className="flex-1 py-3 bg-gray-50 text-gray-400 rounded-xl text-[10px] font-black uppercase tracking-widest">Cancel</button>
-            </div>
-         </div>
+          <div className="space-y-4">
+             <div className="p-3 bg-gray-50 rounded-2xl space-y-3">
+                <div className="space-y-1">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                   <input className={`w-full px-4 py-2.5 border bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all ${errors.name ? 'border-red-500' : 'border-gray-100'}`} value={form.name} onChange={e=>setForm({...form, name: e.target.value})} placeholder="e.g. Memory Tembo" />
+                   {errors.name && <p className="text-[8px] text-red-500 font-bold ml-1">{errors.name}</p>}
+                </div>
+                <div className="space-y-1">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">NRC Number</label>
+                   <input className={`w-full px-4 py-2.5 border bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all ${errors.nrc ? 'border-red-500' : 'border-gray-100'}`} value={form.nrc} onChange={e=>setForm({...form, nrc: e.target.value})} placeholder="000000/00/1" />
+                   {errors.nrc && <p className="text-[8px] text-red-500 font-bold ml-1">{errors.nrc}</p>}
+                </div>
+                
+                <div className="space-y-1">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Update Password (Leave blank to keep same)</label>
+                   <input 
+                      type="password"
+                      className={`w-full px-4 py-2.5 border bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all ${errors.password ? 'border-red-500' : 'border-gray-100'}`} 
+                      value={form.password} 
+                      onChange={e=>setForm({...form, password: e.target.value})} 
+                      placeholder="New password (optional)" 
+                   />
+                   {errors.password && <p className="text-[8px] text-red-500 font-bold ml-1">{errors.password}</p>}
+                </div>
+
+                <div className="space-y-1">
+                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
+                   <input 
+                      className={`w-full px-4 py-2.5 border bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all ${errors.email ? 'border-red-500' : 'border-gray-100'}`} 
+                      value={form.email} 
+                      onChange={e=>setForm({...form, email: e.target.value})} 
+                      placeholder="borrower@example.com" 
+                   />
+                   {errors.email && <p className="text-[8px] text-red-500 font-bold ml-1">{errors.email}</p>}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                   <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Phone Number</label>
+                      <input className={`w-full px-4 py-2.5 border bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all ${errors.phone ? 'border-red-500' : 'border-gray-100'}`} value={form.phone} onChange={e=>setForm({...form, phone: e.target.value})} placeholder="097..." />
+                      {errors.phone && <p className="text-[8px] text-red-500 font-bold ml-1">{errors.phone}</p>}
+                   </div>
+                   <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date of Birth</label>
+                      <input type="date" className="w-full px-4 py-2.5 border border-gray-100 bg-white rounded-xl text-sm font-bold focus:border-blue-500 outline-none transition-all" value={form.dob} onChange={e=>setForm({...form, dob: e.target.value})} />
+                   </div>
+                </div>
+
+                {/* Photo & NRC Upload */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+                   <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Update Photo</label>
+                      <label className="flex flex-col items-center justify-center gap-1.5 w-full py-4 bg-white border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition-all">
+                         <Camera size={20} className="text-gray-400" />
+                         <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">
+                            {photoFile ? photoFile.name : 'Change Photo'}
+                         </span>
+                         <input type="file" accept="image/*" className="hidden" onChange={e=>setPhotoFile(e.target.files[0])} />
+                      </label>
+                   </div>
+                   <div className="space-y-1">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Update NRC Document</label>
+                      <label className="flex flex-col items-center justify-center gap-1.5 w-full py-4 bg-white border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:bg-orange-50 hover:border-orange-300 transition-all">
+                         <Upload size={20} className="text-gray-400" />
+                         <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">
+                            {nrcFile ? nrcFile.name : 'Update NRC Copy'}
+                         </span>
+                         <input type="file" className="hidden" onChange={e=>setNrcFile(e.target.files[0])} />
+                      </label>
+                   </div>
+                </div>
+             </div>
+             <div className="flex gap-3 pt-1">
+                <button 
+                  onClick={handleEdit} 
+                  disabled={loading}
+                  className="flex-1 py-4 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-orange-500/20 active:scale-95 transition-all disabled:opacity-50"
+                >
+                  {loading ? 'Saving Changes...' : 'Save Changes'}
+                </button>
+                <button onClick={()=>setEditModal(null)} className="flex-1 py-4 bg-gray-100 text-gray-400 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all">Cancel</button>
+             </div>
+          </div>
       </Modal>
+
 
       <Modal isOpen={!!shareModal} onClose={() => setShareModal(null)} title="Share Account Details">
          <div className="space-y-5 text-center px-4 py-2">

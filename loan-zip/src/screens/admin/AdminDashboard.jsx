@@ -14,7 +14,8 @@ import {
   Globe,
   Lock
 } from 'lucide-react';
-import { DEMO_CREDENTIALS } from '../../theme';
+import { DEMO_CREDENTIALS, THEME } from '../../theme';
+
 import api from '../../services/api';
 
 export default function AdminDashboard() {
@@ -39,7 +40,8 @@ export default function AdminDashboard() {
   }, []);
 
   const metrics = [
-    { label: 'Total Capital', value: `K${stats.totalCapital.toLocaleString()}`, icon: Globe, color: 'text-blue-400' },
+    { label: 'Total Capital', value: THEME.formatCurrency(stats.totalCapital), icon: Globe, color: 'text-blue-400' },
+
     { label: 'Total Lenders', value: stats.totalLenders, icon: UserCheck, color: 'text-emerald-400' },
     { label: 'Free Plan Users', value: stats.freeLenders, icon: Lock, color: 'text-yellow-400' },
     { label: 'Premium Users', value: stats.premiumLenders, icon: BarChart3, color: 'text-indigo-400' },

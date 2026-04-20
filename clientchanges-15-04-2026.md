@@ -51,3 +51,42 @@ walkthrough.md
  me detailed changes dekh sakte hain. Ek baar dashboard refresh karke "DAN" ka profile check kar lein, wo ab High Risk dikh raha hoga.
 
 Agar kuch aur change karna ho toh batayein!
+
+
+
+------------------------------------------------------------------------------------------- 17-04-2026
+
+
+Mene client ki request ke hisaab se "Credit Scoring" (PTS) feature ko poore project se hatane ka plan bana liya hai, kyunki unke model me sirf "Risk Rating" use hoti hai.
+
+Is badlav me kya hoga:
+
+Admin Portal: Borrowers wali list se "Score" column aur "pts" ko hata diya jayega.
+Lender Portal: Borrowers ke pass se points (pts) hata diye jayenge, sirf Risk level (Green, Amber, Red) dikhega.
+Lender Defaults: "Risk score" ki jagah har jagah "Risk rating" likha jayega.
+Mene iska ek detailed Implementation Plan bana diya hai: 
+implementation_plan_credit_scoring_removal.md
+.
+
+Agar aapko ye sahi lage toh bataye, phir main ise implement karunga.
+
+Implementation Plan Credit Scoring Removal
+proceed
+Mene "Credit Scoring" (PTS) feature ko poore platform se puri tarah hata diya hai, jaisa ki client ne request kiya tha. Ab system sirf "Risk Rating" model par kaam karega.
+
+Kya-kya badlav kiye:
+Admin Portal (Borrowers List): Table se "Score" ka pooora column hata diya gya hai. Ab wahan sirf Verification aur Risk Level dikhega.
+Lender Portal (Borrower Cards): Risk badges ke niche jo points (pts) dikhte the, unhe remove kar diya gaya hai.
+Terminology Update: "Risk score" ki jagah har jagah ab "Risk rating" term ka use kiya gaya hai (jaise Lender Defaults screen par).
+Verification: Mene global search kiya hai aur ab pure project me "score" ya "pts" ka koi bhi UI zikr nahi bacha hai.
+Aap final details yahan dekh sakte hain: 
+walkthrough.md
+.
+
+Ab aapka system puri tarah "Risk Rating" compliant hai._
+
+3
+AdminBorrowers.jsx
+LenderBorrowers.jsx
+LenderDefaults.jsx
+

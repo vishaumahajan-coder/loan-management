@@ -67,8 +67,12 @@ export const THEME = {
   },
   formatCurrency: (amount) => {
     const num = Number(amount) || 0;
-    return `K${num.toLocaleString()}`;
+    return 'K' + num.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   },
+
   // Standard date format: dd mm yyyy (no time)
   formatDate: (dateStr) => {
     if (!dateStr) return '—';
@@ -82,18 +86,18 @@ export const THEME = {
 
   getDOB: (obj) => {
     if (!obj) return null;
-    return obj.dob || 
-           obj.date_of_birth || 
-           obj.dateOfBirth || 
-           obj.birthday || 
-           obj.birth_date || 
-           obj.birthDate || 
-           obj.born ||
-           obj.birth ||
-           obj.profile?.dob || 
-           obj.profile?.date_of_birth || 
-           obj.profile?.birthday ||
-           obj.profile?.dateOfBirth;
+    return obj.dob ||
+      obj.date_of_birth ||
+      obj.dateOfBirth ||
+      obj.birthday ||
+      obj.birth_date ||
+      obj.birthDate ||
+      obj.born ||
+      obj.birth ||
+      obj.profile?.dob ||
+      obj.profile?.date_of_birth ||
+      obj.profile?.birthday ||
+      obj.profile?.dateOfBirth;
   },
 
   // Audit log format: dd mm yyyy - hh:mm AM/PM
@@ -117,8 +121,8 @@ export const DEMO_CREDENTIALS = [
     role: 'lender',
     name: 'John Phiri',
     phone: '0987654321',
-    email: 'john@lendanet.zm',
-    password: '123456',
+    email: 'lender@gmail.com',
+    password: '@Lender1',
     businessName: 'Phiri Fast Loans',
     initials: 'JP',
     referralCode: 'JOHN762',
@@ -126,19 +130,20 @@ export const DEMO_CREDENTIALS = [
   },
   {
     role: 'admin',
-    name: 'Admin User',
+    name: 'Admin',
     phone: '0999999999',
-    email: 'admin@lendanet.com',
-    password: 'admin123',
+    email: 'admin@gmail.com',
+    password: '@Admin123',
     businessName: 'LendaNet HQ',
-    initials: 'AU',
+    initials: 'AD',
   },
+
   {
     role: 'borrower',
     name: 'james',
     phone: '0123456789',
-    email: 'james@gmail.com',
-    password: '@James1234',
+    email: 'borrower@gmail.com',
+    password: '@Borrower1',
     nrc: '123456/78/1',
     initials: 'DZ',
     referralCode: 'DAVID842',

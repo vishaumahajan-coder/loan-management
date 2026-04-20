@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { LogOut, Edit2, Phone, Mail, Building, User, Shield, Camera, Gift } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { LogOut, Edit2, Phone, Mail, Building, User, Shield, Camera, Gift, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api, { API_BASE_URL } from '../../services/api';
@@ -7,9 +7,15 @@ import { Btn, PageHeader } from '../../components/UI';
 import Modal from '../../components/Modal';
 
 export default function LenderProfile() {
-  const { user, logout, updateUser } = useAuth();
+  const { user, logout, updateUser, refreshUser } = useAuth();
   const navigate         = useNavigate();
   const [editModal, setEditModal] = useState(false);
+
+  useEffect(() => {
+    // Call GET API immediately when profile opens to ensure updated fields (like nrc_url) are fetched
+    refreshUser();
+  }, []);
+
   const [form, setForm] = useState({
     name: user?.name || '',
     businessName: user?.businessName || '',
@@ -112,24 +118,77 @@ export default function LenderProfile() {
         </div>
       </div>
 
-      {/* License Upload Section */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Money Lender's License</h3>
-          <span className="px-2 py-0.5 rounded-md bg-green-100 text-green-700 text-[10px] font-bold">Verified</span>
+      {/* Documents Upload Section (Grid Layout) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Money Lender's License */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Money Lender's License</h3>
+            {user?.license_url ? (
+              <span className="px-2 py-0.5 rounded-md bg-green-100 text-green-700 text-[10px] font-bold">Verified</span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold">Pending</span>
+            )}
+          </div>
+          <label className="flex items-center justify-center gap-2 w-full py-3.5 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 cursor-pointer hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors text-gray-600 font-bold text-sm">
+            <Upload size={16} />
+            {user?.license_url ? 'Update License' : 'Upload License'}
+            <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => handleFileChange(e, 'license')} />
+          </label>
+          <p className="text-[10px] text-gray-400 mt-2 text-center pointer-events-none mb-3">Take a picture or upload a PDF</p>
+          
+          <div className="mt-auto">
+            {user?.license_url && (
+               <div className="space-y-3">
+                  <div className="p-2 bg-blue-50 rounded-lg flex items-center justify-between">
+                     <span className="text-[9px] font-black text-blue-600 uppercase">License file attached</span>
+                     <a href={API_BASE_URL.replace('/api', '') + user.license_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-md font-bold hover:bg-blue-700 transition-colors">View</a>
+                  </div>
+                  {/* Inline Image Preview */}
+                  {(user.license_url.toLowerCase().endsWith('.jpg') || user.license_url.toLowerCase().endsWith('.png') || user.license_url.toLowerCase().endsWith('.jpeg') || user.license_url.toLowerCase().endsWith('.webp')) && (
+                    <div className="w-full h-40 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
+                      <img src={API_BASE_URL.replace('/api', '') + user.license_url} alt="License Proof" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+               </div>
+            )}
+          </div>
         </div>
-        <label className="flex items-center justify-center gap-2 w-full py-3.5 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 cursor-pointer hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors text-gray-600 font-bold text-sm">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-          Update Proof Document
-          <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => handleFileChange(e, 'license')} />
-        </label>
-        <p className="text-[10px] text-gray-400 mt-2 text-center pointer-events-none">Take a picture or upload a PDF</p>
-        {user?.license_url && (
-           <div className="mt-3 p-2 bg-blue-50 rounded-lg flex items-center justify-between">
-              <span className="text-[9px] font-black text-blue-600 uppercase">Current license file attached</span>
-              <a href={API_BASE_URL.replace('/api', '') + user.license_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-2 py-1 rounded-md font-bold">View</a>
-           </div>
-        )}
+
+        {/* NRC Document */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">NRC Document</h3>
+            {user?.nrc_url ? (
+              <span className="px-2 py-0.5 rounded-md bg-green-100 text-green-700 text-[10px] font-bold">Verified</span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-700 text-[10px] font-bold">Pending</span>
+            )}
+          </div>
+          <label className="flex items-center justify-center gap-2 w-full py-3.5 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50 cursor-pointer hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-colors text-gray-600 font-bold text-sm">
+            <Upload size={16} />
+            {user?.nrc_url ? 'Update NRC' : 'Upload NRC'}
+            <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => handleFileChange(e, 'nrc_document')} />
+          </label>
+          <p className="text-[10px] text-gray-400 mt-2 text-center pointer-events-none mb-3">Take a picture or upload a PDF</p>
+          
+          <div className="mt-auto">
+            {user?.nrc_url && (
+               <div className="space-y-3">
+                  <div className="p-2 bg-blue-50 rounded-lg flex items-center justify-between">
+                     <span className="text-[9px] font-black text-blue-600 uppercase">NRC file attached</span>
+                     <a href={API_BASE_URL.replace('/api', '') + user.nrc_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-md font-bold hover:bg-blue-700 transition-colors">View</a>
+                  </div>
+                  {/* Inline Image Preview */}
+                  {(user.nrc_url.toLowerCase().endsWith('.jpg') || user.nrc_url.toLowerCase().endsWith('.png') || user.nrc_url.toLowerCase().endsWith('.jpeg') || user.nrc_url.toLowerCase().endsWith('.webp')) && (
+                    <div className="w-full h-40 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
+                      <img src={API_BASE_URL.replace('/api', '') + user.nrc_url} alt="NRC Proof" className="w-full h-full object-contain" />
+                    </div>
+                  )}
+               </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Uploading Overlay */}

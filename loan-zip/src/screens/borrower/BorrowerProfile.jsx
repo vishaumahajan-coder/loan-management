@@ -231,11 +231,20 @@ export default function BorrowerProfile() {
           <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => handleFileChange(e, 'license')} />
         </label>
         {user?.license_url && (
-           <div className="mt-3 p-2 bg-blue-50 rounded-lg flex items-center justify-between">
-              <span className="text-[9px] font-black text-blue-600 uppercase italic">Your NRC document is securely attached</span>
-              <a href={api.defaults.baseURL.replace('/api', '') + user.license_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-3 py-1.5 rounded-md font-bold uppercase tracking-wider">View</a>
+           <div className="mt-3 space-y-3">
+              <div className="p-2 bg-blue-50 rounded-lg flex items-center justify-between">
+                 <span className="text-[9px] font-black text-blue-600 uppercase italic">Your NRC document is securely attached</span>
+                 <a href={api.defaults.baseURL.replace('/api', '') + user.license_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-3 py-1.5 rounded-md font-bold uppercase tracking-wider">View Full</a>
+              </div>
+              {/* NRC Preview if it's an image */}
+              {(user.license_url.toLowerCase().endsWith('.jpg') || user.license_url.toLowerCase().endsWith('.png') || user.license_url.toLowerCase().endsWith('.jpeg') || user.license_url.toLowerCase().endsWith('.webp')) && (
+                <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
+                  <img src={api.defaults.baseURL.replace('/api', '') + user.license_url} alt="NRC Proof" className="w-full h-full object-contain" />
+                </div>
+              )}
            </div>
         )}
+
       </div>
 
       {/* Uploading Overlay */}

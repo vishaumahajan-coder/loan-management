@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DEMO_CREDENTIALS } from '../theme';
 
 import api from '../services/api';
@@ -38,11 +38,38 @@ export function AuthProvider({ children }) {
     setUser(updatedUser);
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      const updatedUser = response.data;
+      updateUser(updatedUser);
+      return updatedUser;
+    } catch (error) {
+      console.error('Failed to refresh user', error);
+      if (error.response?.status === 401) {
+        logout();
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+
+    // Automatic sync every 60 seconds
+    const interval = setInterval(() => {
+      refreshUser();
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
 }
+
+
 
 export const useAuth = () => useContext(AuthContext);

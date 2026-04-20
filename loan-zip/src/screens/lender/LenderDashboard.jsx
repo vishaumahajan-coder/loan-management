@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   CreditCard, 
@@ -11,22 +11,25 @@ import {
   Globe, 
   Lock, 
   Activity as ActivityIcon,
-  Star
+  Star,
+  Zap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useConfig } from '../../context/ConfigContext';
-// import { mockLoans } from '../../data/mockData';
 import { StatusBadge } from '../../components/UI';
+import { THEME } from '../../theme';
 
-import { useEffect, useState } from 'react';
 import api from '../../services/api';
+import UpgradePlanModal from '../../components/modals/UpgradePlanModal';
 
 export default function LenderDashboard() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const { membershipConfig } = useConfig();
   const navigate = useNavigate();
   const [stats, setStats] = useState({ totalPortfolio: 0, activeLoans: 0, defaultedLoans: 0, recentActivity: [] });
+  const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const fetchStats = async () => {
     try {
@@ -34,17 +37,42 @@ export default function LenderDashboard() {
       setStats(response.data);
     } catch (error) {
       console.error('Failed to fetch stats', error);
-    } finally {
-      setLoading(false);
+    } 
+  };
+
+  const fetchApplications = async () => {
+    try {
+      const response = await api.get('/loans/applications');
+      setApplications(response.data.filter(a => a.status === 'pending'));
+    } catch (error) {
+      console.error('Failed to fetch applications', error);
+    }
+  };
+
+  const handleStatusUpdate = async (id, status) => {
+    try {
+      await api.put(`/loans/applications/${id}/status`, { status });
+      alert(`Application ${status}!`);
+      fetchApplications();
+    } catch (error) {
+       alert(error.response?.data?.message || 'Update failed');
     }
   };
 
   useEffect(() => {
-    fetchStats();
+    const init = async () => {
+      setLoading(true);
+      await Promise.all([fetchStats(), fetchApplications()]);
+      setLoading(false);
+    }
+    init();
   }, []);
 
   const isFree = !user?.isPaid;
-  const totalAmount = stats.totalPortfolio;
+  
+  // Get prices dynamically from config context
+  const monthlyPrice = membershipConfig.monthly?.price || 200;
+  const annualPrice = membershipConfig.annual?.price || 1000;
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-500">
@@ -66,7 +94,7 @@ export default function LenderDashboard() {
                     Hi, {user?.name?.split(' ')[0] || 'Lender'}!
                   </h1>
                   <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest opacity-80">
-                    {isFree ? 'Free Plan — Upgrade to unlock all features' : 'Premium Plan — Full access enabled'}
+                    {isFree ? 'Free Plan — Upgrade to unlock all features' : `Premium Plan (${user?.plan_type?.toUpperCase()}) — Full access enabled`}
                   </p>
                </div>
                <div className="flex gap-2">
@@ -84,7 +112,8 @@ export default function LenderDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 px-1">
         {[
-          { label: 'Total Portfolio', value: `K${Number(stats.totalPortfolio).toLocaleString()}`, icon: Globe, color: 'text-blue-600', bg: 'bg-blue-50' },
+          { label: 'Total Portfolio', value: THEME.formatCurrency(stats.totalPortfolio), icon: Globe, color: 'text-blue-600', bg: 'bg-blue-50' },
+
           { label: 'Active Loans', value: stats.activeLoans, icon: ActivityIcon, color: 'text-indigo-600', bg: 'bg-indigo-50' },
           { label: 'Defaulted', value: stats.defaultedLoans, icon: AlertTriangle, color: 'text-rose-600', bg: 'bg-rose-50' },
           { label: 'Status', value: 'Healthy', icon: ShieldCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
@@ -123,7 +152,8 @@ export default function LenderDashboard() {
                    </div>
                    <div className="text-right flex items-center gap-4">
                       <div className="hidden sm:block">
-                         <p className="text-base font-black text-slate-950 tracking-tight leading-none mb-1">K{loan.amount}</p>
+                         <p className="text-base font-black text-slate-950 tracking-tight leading-none mb-1">{THEME.formatCurrency(loan.amount)}</p>
+
                       </div>
                       <StatusBadge status={loan.status} />
                       <ChevronRight size={16} className="text-slate-200 group-hover:translate-x-1 transition-all" />
@@ -134,67 +164,117 @@ export default function LenderDashboard() {
           <button onClick={() => navigate('/lender/loans')} className="w-full py-3 bg-gray-50 rounded-xl text-[9px] font-black text-slate-400 uppercase tracking-widest hover:bg-slate-100 transition-all">
             View All Loans
           </button>
+
+          {/* Pending Loan Requests */}
+          {applications.length > 0 && (
+            <div className="mt-8 space-y-3">
+               <div className="flex items-center justify-between px-2">
+                  <h3 className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                     <Plus size={14} /> Pending Loan Requests
+                  </h3>
+               </div>
+               <div className="space-y-2.5">
+                  {applications.map((app) => (
+                     <div key={app.id} className="p-4 bg-white rounded-2xl border border-blue-100 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                           <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                              <Search size={18} />
+                           </div>
+                           <div>
+                              <h4 className="text-[13px] font-black text-slate-950 uppercase leading-none mb-1.5">{app.borrowerName}</h4>
+                              <p className="text-[10px] font-bold text-slate-400 uppercase opacity-70">NRC: {app.borrowerNRC} • Requested {THEME.formatCurrency(app.amount)}</p>
+
+                           </div>
+                        </div>
+                        <div className="flex gap-2">
+                           <button 
+                              onClick={() => handleStatusUpdate(app.id, 'approved')}
+                              className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 active:scale-95 transition-all shadow-md shadow-emerald-600/20"
+                           >
+                              Approve
+                           </button>
+                           <button 
+                              onClick={() => handleStatusUpdate(app.id, 'rejected')}
+                              className="px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-rose-100 active:scale-95 transition-all"
+                           >
+                              Reject
+                           </button>
+                        </div>
+                     </div>
+                  ))}
+               </div>
+            </div>
+          )}
         </div>
 
-        {/* Membership Plan Card (right column) */}
+        {/* Membership Plan Card (right column) - MATCHING IMAGE 2 */}
         <div className="lg:col-span-4 flex flex-col gap-4">
-           <div className={`rounded-2xl p-6 text-white relative overflow-hidden shadow-lg flex-1 ${isFree ? 'bg-[#020617]' : 'bg-gradient-to-br from-blue-700 to-blue-900'}`}>
+           <div className={`rounded-[32px] p-8 text-white relative overflow-hidden shadow-2xl flex-1 flex flex-col justify-center min-h-[400px] border border-white/10 ${isFree ? 'bg-slate-950' : 'bg-gradient-to-br from-blue-600 to-blue-800'}`}>
+              {/* Decorative circle */}
+              <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl"></div>
+              
               <div className="relative z-10 flex flex-col h-full items-center text-center">
-                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${isFree ? 'bg-white/5 border border-white/10 text-yellow-400' : 'bg-white/10 border border-white/20 text-emerald-300'}`}>
-                    {isFree ? <Lock size={24} /> : <Star size={24} />}
+                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-2xl ${isFree ? 'bg-slate-900 border border-white/5 text-blue-400' : 'bg-white/20 border border-white/20 text-white'}`}>
+                    {isFree ? <Zap size={32} /> : <Star size={32} />}
                  </div>
-                 <h4 className="text-sm font-black uppercase tracking-tight mb-1">
-                   {isFree ? 'Free Plan' : 'Premium Plan'}
+                 
+                 <h4 className="text-lg font-black uppercase tracking-tighter mb-2">
+                   {isFree ? 'Explore Premium' : 'Premium Plan'}
                  </h4>
-                 {isFree && (
-                   <div className="mb-4">
-                      <p className="text-[14px] font-black text-white tracking-tight">K{membershipConfig.monthly.price} / Month</p>
-                      <p className="text-[8px] text-blue-300 uppercase font-black tracking-widest mt-1">
-                         {membershipConfig.monthly.trial && '⭐ FREE TRIAL AVAILABLE'}
-                      </p>
-                   </div>
-                 )}
-                 <p className="text-[10px] text-blue-100/50 font-medium mb-4">
-                   {isFree ? 'Upgrade to unlock search, risk data & full history.' : 'Full access to all features is active.'}
+                 
+                 <p className="text-[11px] text-blue-100/50 font-bold uppercase tracking-[2px] mb-8 leading-relaxed max-w-[200px]">
+                   {isFree ? 'Upgrade to unlock network search, risk data & full history.' : 'FULL ACCESS TO ALL FEATURES IS ACTIVE.'}
                  </p>
 
-                 {isFree && (
-                   <div className="w-full space-y-1.5 mb-4 text-left">
-                     {[
-                       { label: 'Network Search', locked: true },
-                       { label: 'Risk Level View', locked: true },
-                       { label: 'Borrower History', locked: true },
-                       { label: 'Create Loans', locked: false },
-                       { label: 'Add Borrowers', locked: false },
-                     ].map((f, i) => (
-                       <div key={i} className="flex items-center justify-between text-[9px] px-2 py-1.5 bg-white/5 rounded-lg">
-                         <span className="font-bold uppercase tracking-wider text-white/70">{f.label}</span>
-                         <span className={f.locked ? 'text-red-400 font-black' : 'text-emerald-400 font-black'}>
-                           {f.locked ? '✕ Locked' : '✓ Free'}
-                         </span>
-                       </div>
-                     ))}
+                 {isFree ? (
+                   <div className="w-full space-y-2 mb-10">
+                      <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
+                         <span className="text-[10px] font-black text-blue-200">MONTHLY</span>
+                         <span className="text-sm font-black text-white tracking-tight">{THEME.formatCurrency(monthlyPrice)}</span>
+
+                      </div>
+                      <div className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
+                         <span className="text-[10px] font-black text-blue-200">ANNUAL</span>
+                         <span className="text-sm font-black text-white tracking-tight text-emerald-400">{THEME.formatCurrency(annualPrice)}</span>
+
+                      </div>
+                   </div>
+                 ) : (
+                   <div className="w-full h-24 flex items-center justify-center">
+                      <div className="w-12 h-1 bg-white/20 rounded-full blur-[1px]"></div>
                    </div>
                  )}
 
                  <button 
-                   onClick={() => alert(isFree ? `Upgrade to Premium for K${membershipConfig.monthly.price}. Contact admin@lendanet.zm.` : 'You are already on the Premium plan!')}
-                   className={`w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all ${isFree ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                   onClick={() => isFree ? setIsUpgradeModalOpen(true) : alert('You already have Premium access!')}
+                   className={`w-full py-5 rounded-[22px] text-[10px] font-black uppercase tracking-[3px] shadow-2xl transition-all active:scale-95 ${
+                     isFree ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-600/20' : 'bg-white/10 text-white border border-white/10 hover:bg-white/20'
+                   }`}
                  >
-                   {isFree ? 'Upgrade to Premium' : '✓ Premium Active'}
+                   {isFree ? 'Upgrade Now' : '✓ Premium Active'}
                  </button>
               </div>
            </div>
             
            <button 
               onClick={() => navigate('/lender/search')}
-              className="w-full p-5 bg-white border border-gray-100 rounded-2xl text-[9px] font-black text-slate-400 uppercase tracking-widest hover:bg-[#020617] hover:text-white transition-all shadow-sm flex items-center justify-center gap-3"
+              className="w-full p-6 bg-white border border-gray-100 rounded-[28px] text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-[#020617] hover:text-white transition-all shadow-sm flex items-center justify-center gap-4 group"
            >
-              <Search size={16} />
-              Search Borrowers
+              <Search size={18} className="group-hover:scale-110 transition-transform" />
+              Search Network
            </button>
         </div>
       </div>
+
+      <UpgradePlanModal 
+        isOpen={isUpgradeModalOpen} 
+        onClose={() => setIsUpgradeModalOpen(false)} 
+        onSuccess={() => {
+          alert('Request Sent Successfully!');
+          refreshUser();
+        }}
+      />
     </div>
   );
 }
+

@@ -4,6 +4,8 @@ import api from '../../services/api';
 // import { mockDefaultLedger } from '../../data/mockData';
 import { Btn, PageHeader, EmptyState, ConfirmDialog } from '../../components/UI';
 import Modal from '../../components/Modal';
+import { THEME } from '../../theme';
+
 
 export default function LenderDefaults() {
   const [ledger, setLedger]         = useState([]);
@@ -82,7 +84,8 @@ export default function LenderDefaults() {
                         <p className="text-xs text-gray-400 font-mono">{d.borrowerNRC}</p>
                       </div>
                     </div>
-                    <p className="text-xl font-black text-red-600 mt-2">K{d.defaultAmount.toLocaleString()}</p>
+                    <p className="text-xl font-black text-red-600 mt-2">{THEME.formatCurrency(d.defaultAmount)}</p>
+
                     <p className="text-xs text-gray-400 mt-0.5">Loan {d.loanId} · Defaulted {d.defaultDate}</p>
                   </div>
                   <span className="px-2.5 py-1 rounded-full text-xs font-bold capitalize" style={sc}>
@@ -115,7 +118,8 @@ export default function LenderDefaults() {
                 { label: 'Borrower',        value: viewModal.borrowerName },
                 { label: 'NRC',             value: viewModal.borrowerNRC },
                 { label: 'Loan ID',         value: viewModal.loanId },
-                { label: 'Default Amount',  value: `K${viewModal.defaultAmount.toLocaleString()}` },
+                { label: 'Default Amount',  value: THEME.formatCurrency(viewModal.defaultAmount) },
+
                 { label: 'Default Date',    value: viewModal.defaultDate },
                 { label: 'Reported By',     value: viewModal.lenderName },
                 { label: 'Status',          value: viewModal.status },
@@ -137,7 +141,7 @@ export default function LenderDefaults() {
         onClose={() => setDeleteConfirm(null)}
         onConfirm={() => { setLedger(prev => prev.filter(d => d.id !== deleteConfirm?.id)); setDeleteConfirm(null); }}
         title="Remove Default Entry?"
-        message={`Remove the default record for ${deleteConfirm?.borrowerName}? This will affect their risk score.`}
+        message={`Remove the default record for ${deleteConfirm?.borrowerName}? This will affect their risk rating.`}
         confirmLabel="Remove Entry"
         isDanger
       />
