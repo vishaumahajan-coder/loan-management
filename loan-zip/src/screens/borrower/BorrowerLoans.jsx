@@ -26,6 +26,10 @@ export default function BorrowerLoans() {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewModal, setViewModal] = useState(null);
+  const [platformSettings, setPlatformSettings] = useState(null);
+  const [manualPaymentTask, setManualPaymentTask] = useState(null); // { loanId, installmentId, amount }
+  const [transactionRef, setTransactionRef] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
 
   const fetchLoans = async () => {
@@ -42,8 +46,19 @@ export default function BorrowerLoans() {
   };
 
 
+  const fetchSettings = async () => {
+    try {
+      const { data } = await api.get('/settings');
+      setPlatformSettings(data);
+    } catch (error) {
+      console.error('Failed to fetch platform settings', error);
+    }
+  };
+
+
   useEffect(() => {
     fetchLoans();
+    fetchSettings();
   }, []);
 
   const activeLoans = loans.filter(l => l.status !== 'paid');
@@ -75,26 +90,47 @@ export default function BorrowerLoans() {
   });
 
   const handlePayment = async (loanId, installmentId, amount) => {
+    if (platformSettings?.online_payment_gateway_enabled === true || platformSettings?.online_payment_gateway_enabled === 'true') {
+      alert('Online Payment Gateway integration is coming soon! Please use manual transfer for now.');
+      return;
+    }
+
+    setManualPaymentTask({ loanId, installmentId, amount });
+    setTransactionRef('');
+  };
+
+  const confirmManualPayment = async () => {
+    if (!transactionRef.trim()) {
+      alert('Please enter a transaction reference / ID for tracking.');
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      await api.post(`/loans/${loanId}/payment`, {
-        amount,
-        method: 'Mobile Money',
-        installmentId
+      await api.post(`/loans/${manualPaymentTask.loanId}/payment`, {
+        amount: manualPaymentTask.amount,
+        method: 'Bank Transfer',
+        installmentId: manualPaymentTask.installmentId,
+        reference: transactionRef
       });
-      alert('Payment successful! 🎉');
+      
+      alert('Payment reference submitted! An admin/lender will verify it. 🎉');
+      setManualPaymentTask(null);
       const updatedLoans = await fetchLoans();
       
       // Update the current modal with the new data from the list
       if (updatedLoans) {
-        const freshData = updatedLoans.find(l => l.id === loanId);
+        const freshData = updatedLoans.find(l => l.id === manualPaymentTask.loanId);
         if (freshData) setViewModal(freshData);
       } else {
-        setViewModal(null); // Fallback to close if fetch failed
+        setViewModal(null); 
       }
 
     } catch (error) {
        console.error('Payment failed', error);
        alert(error.response?.data?.message || 'Payment failed');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -331,6 +367,90 @@ export default function BorrowerLoans() {
             </div>
           );
         })()}
+      </Modal>
+
+      {/* Manual Payment Modal */}
+      <Modal 
+        isOpen={!!manualPaymentTask} 
+        onClose={() => !isSubmitting && setManualPaymentTask(null)} 
+        title="Complete Payment" 
+        size="sm"
+      >
+        {manualPaymentTask && (
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+              <div className="flex items-center gap-3 mb-2">
+                <Info size={16} className="text-blue-600" />
+                <h4 className="text-xs font-black text-blue-900 uppercase tracking-widest">Manual Bank Transfer</h4>
+              </div>
+              <p className="text-[11px] text-blue-700 leading-relaxed font-medium">
+                Please transfer <strong>{THEME.formatCurrency(manualPaymentTask.amount)}</strong> to the bank account below and enter the reference ID.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4 shadow-sm">
+              <div className="grid grid-cols-2 gap-y-4 gap-x-2">
+                <div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Bank Name</p>
+                  <p className="text-xs font-bold text-slate-900">{platformSettings?.bank_name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Holder</p>
+                  <p className="text-xs font-bold text-slate-900">{platformSettings?.bank_account_name || 'N/A'}</p>
+                </div>
+                <div className="col-span-2 pt-2 border-t border-slate-50">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Number</p>
+                  <p className="text-lg font-black text-[#020617] tracking-wider font-mono">{platformSettings?.bank_account_number || 'N/A'}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">IFSC / Branch Code</p>
+                  <p className="text-xs font-bold text-slate-900 font-mono uppercase">{platformSettings?.bank_ifsc_code || 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Payment Reference / Transaction ID</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="e.g. TXN1234567890"
+                  value={transactionRef}
+                  onChange={(e) => setTransactionRef(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:font-medium placeholder:text-slate-300"
+                />
+                <Activity size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" />
+              </div>
+              <p className="text-[9px] text-slate-400 italic px-1 font-medium italic">
+                * Note: Your record will be updated once the transfer is verified.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                onClick={confirmManualPayment}
+                disabled={isSubmitting}
+                className="w-full py-4 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-200 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <>
+                    <ShieldCheck size={16} />
+                    Submit Payment Record
+                  </>
+                )}
+              </button>
+              <button
+                onClick={() => setManualPaymentTask(null)}
+                disabled={isSubmitting}
+                className="w-full py-3 bg-slate-50 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
 
 

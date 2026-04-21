@@ -543,6 +543,7 @@ export default function LenderLoans() {
                                     <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">#</th>
                                     <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount</th>
                                     <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Status</th>
+                                    <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Ref</th>
                                     <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Date</th>
                                  </tr>
                               </thead>
@@ -584,6 +585,11 @@ export default function LenderLoans() {
                                                    )}
                                                 </div>
                                              )}
+                                          </td>
+                                          <td className="px-4 py-4 text-center">
+                                             <p className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-tighter">
+                                                {ins.reference || ins.transaction_reference || '-'}
+                                             </p>
                                           </td>
                                           <td className="px-4 py-4 text-right">
                                              <p className={`text-[10px] font-bold uppercase tracking-tight ${isOverdue ? 'text-red-600' : 'text-slate-500'}`}>
