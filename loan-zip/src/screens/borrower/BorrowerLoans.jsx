@@ -46,8 +46,33 @@ export default function BorrowerLoans() {
     fetchLoans();
   }, []);
 
-  const totalDebt = loans.reduce((sum, l) => sum + (l.status !== 'paid' ? l.amount : 0), 0);
   const activeLoans = loans.filter(l => l.status !== 'paid');
+
+  let totalBorrowed = 0;
+  let totalRemaining = 0;
+  let totalPaidAmount = 0;
+  let totalPaidTimes = 0;
+
+  loans.forEach(loan => {
+    const loanAmount = parseFloat(loan.amount) || 0;
+    totalBorrowed += loanAmount;
+    
+    const schedule = loan.instalmentSchedule || [];
+    
+    // Sum of paid amounts in this loan
+    const paidInThisLoan = schedule.reduce((sum, ins) => {
+       if (ins.status === 'paid') {
+           totalPaidTimes += 1;
+           return sum + (parseFloat(ins.paid_amount || ins.amount) || 0);
+       }
+       return sum;
+    }, 0);
+
+    totalPaidAmount += paidInThisLoan;
+    if (loan.status !== 'paid') {
+        totalRemaining += Math.max(0, loanAmount - paidInThisLoan);
+    }
+  });
 
   const handlePayment = async (loanId, installmentId, amount) => {
     try {
@@ -89,13 +114,27 @@ export default function BorrowerLoans() {
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
               <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest leading-none">Status: Good Standing</p>
             </div>
-            <div>
-              <p className="text-[10px] font-black text-blue-400/60 uppercase tracking-widest mb-1 leading-none">Total Amount Due</p>
-              <h2 className="text-3xl md:text-5xl font-black tracking-tight leading-none mb-3">{THEME.formatCurrency(totalDebt)}</h2>
+            <div className="grid grid-cols-3 gap-3 md:gap-8 pt-2">
+              <div>
+                <p className="text-[10px] font-black text-blue-400/60 uppercase tracking-widest mb-1 leading-none">Total Loan</p>
+                <h2 className="text-xl md:text-3xl lg:text-4xl font-black tracking-tight leading-none mb-3 text-white">{THEME.formatCurrency(totalBorrowed)}</h2>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-emerald-400/60 uppercase tracking-widest mb-1 leading-none">Total Paid</p>
+                <h2 className="text-xl md:text-3xl lg:text-4xl font-black tracking-tight leading-none mb-3 text-emerald-400">{THEME.formatCurrency(totalPaidAmount)}</h2>
+              </div>
+              <div>
+                <p className="text-[10px] font-black text-amber-400/60 uppercase tracking-widest mb-1 leading-none">Remaining Due</p>
+                <h2 className="text-xl md:text-3xl lg:text-4xl font-black tracking-tight leading-none mb-3 text-amber-400">{THEME.formatCurrency(totalRemaining)}</h2>
+              </div>
             </div>
-            <div className="flex gap-2 justify-center lg:justify-start">
+            
+            <div className="flex flex-wrap gap-2 justify-center lg:justify-start pt-1">
               <div className="px-3 py-1.5 bg-white/5 border border-white/5 rounded-xl text-center">
                 <p className="text-[10px] font-black text-white uppercase tracking-tight">{activeLoans.length} Active Loans</p>
+              </div>
+              <div className="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-center">
+                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-tight">{totalPaidTimes} Payments Made</p>
               </div>
             </div>
           </div>

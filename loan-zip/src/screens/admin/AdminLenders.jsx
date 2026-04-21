@@ -16,7 +16,8 @@ import {
   Phone,
   Upload,
   BarChart3,
-  Database
+  Database,
+  Camera
 } from 'lucide-react';
 import api from '../../services/api';
 import { StatusBadge, Btn, PageHeader, ConfirmDialog } from '../../components/UI';
@@ -33,7 +34,7 @@ export default function AdminLenders() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewModal, setViewModal]     = useState(null);
   const [plans, setPlans]             = useState([]);
-  const [form, setForm]               = useState({ name: '', businessName: '', email: '', phone: '', password: 'LendaNet@123', license: null, nrc_document: null, planType: 'free', nrc: '', companyRegistrationNumber: '', lenderType: 'individual' });
+  const [form, setForm]               = useState({ name: '', businessName: '', email: '', phone: '', password: 'LendaNet@123', license: null, nrc_document: null, photo: null, planType: 'free', nrc: '', companyRegistrationNumber: '', lenderType: 'individual' });
   const [errors, setErrors]           = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [viewLoans, setViewLoans] = useState([]);
@@ -148,13 +149,15 @@ export default function AdminLenders() {
            formData.append('license', form[key]);
          } else if (key === 'nrc_document' && form[key]) {
            formData.append('nrc_document', form[key]);
+         } else if (key === 'photo' && form[key]) {
+           formData.append('photo', form[key]);
          } else if (form[key] !== null) {
            formData.append(key, form[key]);
          }
        });
        await api.post('/auth/register', formData);
        setIsModalOpen(false);
-       setForm({ name: '', businessName: '', email: '', phone: '', password: 'LendaNet@123', license: null, nrc_document: null, planType: 'free', nrc: '', companyRegistrationNumber: '', lenderType: 'individual' });
+       setForm({ name: '', businessName: '', email: '', phone: '', password: 'LendaNet@123', license: null, nrc_document: null, photo: null, planType: 'free', nrc: '', companyRegistrationNumber: '', lenderType: 'individual' });
        Swal.fire('Registered!', 'New lender account has been created.', 'success');
        fetchLenders();
     } catch (error) {
@@ -682,7 +685,27 @@ export default function AdminLenders() {
              </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Profile Photo</label>
+              <label className="block w-full border-2 border-dashed border-gray-100 rounded-2xl p-5 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all group/upload relative overflow-hidden">
+                 <input type="file" className="hidden" accept="image/*" onChange={e => setForm({...form, photo: e.target.files[0]})} />
+                 <div className="flex flex-col items-center gap-2">
+                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-slate-400 group-hover/upload:scale-110 group-hover/upload:text-blue-600 transition-all">
+                      <Camera size={20} />
+                    </div>
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-black text-slate-900 uppercase tracking-tight">
+                        {form.photo ? form.photo.name : 'Upload Photo'}
+                      </p>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                        {form.photo ? 'File selected' : 'Your Photo'}
+                      </p>
+                    </div>
+                 </div>
+                 {form.photo && <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>}
+              </label>
+            </div>
             <div className="space-y-1.5">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Proof of Licence</label>
               <label className="block w-full border-2 border-dashed border-gray-100 rounded-2xl p-5 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50/30 transition-all group/upload relative overflow-hidden">

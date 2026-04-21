@@ -7,17 +7,18 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { THEME } from '../theme';
 
+
 const NAV = [
-  { path: '/admin/dashboard',  label: 'Dashboard',       icon: LayoutDashboard },
-  { path: '/admin/lenders',    label: 'Lenders',          icon: UserCheck },
-  { path: '/admin/borrowers',  label: 'Borrowers',        icon: Users },
-  { path: '/admin/loans',      label: 'All Loans',        icon: CreditCard },
-  { path: '/admin/defaults',   label: 'Default Ledger',   icon: Shield },
-  { path: '/admin/audit',      label: 'Audit Logs',       icon: ClipboardList },
-  { path: '/admin/referrals',  label: 'Referral Rules',   icon: Gift },
-  { path: '/admin/membership', label: 'Memberships',      icon: Star },
+  { path: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/admin/lenders', label: 'Lenders', icon: UserCheck },
+  { path: '/admin/borrowers', label: 'Borrowers', icon: Users },
+  { path: '/admin/loans', label: 'All Loans', icon: CreditCard },
+  { path: '/admin/defaults', label: 'Default Ledger', icon: Shield },
+  { path: '/admin/audit', label: 'Audit Logs', icon: ClipboardList },
+  { path: '/admin/referrals', label: 'Referral Rules', icon: Gift },
+  { path: '/admin/membership', label: 'Memberships', icon: Star },
   { path: '/admin/membership-requests', label: 'Upgrade Requests', icon: Shield },
-  { path: '/admin/settings',   label: 'Settings',         icon: Settings },
+  { path: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 
@@ -26,7 +27,7 @@ const C = THEME.role.admin;
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [search, setSearch] = useState('');
 
@@ -61,9 +62,8 @@ export default function AdminLayout() {
           const active = isActive(path);
           return (
             <Link key={path} to={path} onClick={onLinkClick}
-              className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${
-                active ? 'bg-white text-blue-700 shadow-md' : 'text-blue-100 hover:bg-white/10 hover:text-white'
-              }`}>
+              className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${active ? 'bg-white text-blue-700 shadow-md' : 'text-blue-100 hover:bg-white/10 hover:text-white'
+                }`}>
               <Icon size={18} className={active ? 'text-blue-600' : 'text-blue-300'} />
               <span>{label}</span>
               {active && <ChevronRight size={14} className="ml-auto text-blue-400" />}
@@ -75,7 +75,7 @@ export default function AdminLayout() {
       <div className="px-3 pb-5 pt-2 border-t border-blue-900/30 mt-2">
         <button onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-all text-sm font-semibold">
-          <LogOut size={18}/> Sign Out
+          <LogOut size={18} /> Sign Out
         </button>
       </div>
     </>
@@ -85,21 +85,20 @@ export default function AdminLayout() {
     <div className="flex min-h-screen bg-gray-50 uppercase">
       {/* Mobile Drawer Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 lg:hidden animate-in fade-in duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Mobile Drawer */}
-      <aside 
-        className={`fixed inset-y-0 left-0 w-72 z-[60] lg:hidden transform transition-transform duration-300 ease-out flex flex-col ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+      <aside
+        className={`fixed inset-y-0 left-0 w-72 z-[60] lg:hidden transform transition-transform duration-300 ease-out flex flex-col ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
         style={{ background: C.gradient }}
       >
         <SidebarContent onLinkClick={() => setIsSidebarOpen(false)} />
-        <button 
+        <button
           onClick={() => setIsSidebarOpen(false)}
           className="absolute top-4 right-4 w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-all border border-white/10"
         >
@@ -109,14 +108,14 @@ export default function AdminLayout() {
 
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 flex-shrink-0 sticky top-0 h-screen shadow-2xl" style={{ background: C.gradient }}>
-        <SidebarContent onLinkClick={() => {}} />
+        <SidebarContent onLinkClick={() => { }} />
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Topbar */}
         <header className="flex items-center justify-between px-4 md:px-6 py-4 bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm uppercase">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => setIsSidebarOpen(true)}
               className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-slate-600 hover:bg-blue-50 hover:text-blue-600 transition-all border border-gray-100 active:scale-95"
             >
@@ -125,7 +124,7 @@ export default function AdminLayout() {
             <h1 className="text-lg font-black text-[#020617] tracking-tighter hidden md:block uppercase">Admin <span className="text-blue-600">Dashboard</span></h1>
             <h1 className="text-base font-black text-[#020617] tracking-tighter md:hidden uppercase">Lenda<span className="text-blue-600">Net</span></h1>
           </div>
-          
+
           <div className="flex items-center gap-2 md:gap-4">
             {/* <div className="hidden sm:flex relative">
               <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300" />
@@ -137,7 +136,7 @@ export default function AdminLayout() {
             </div> */}
             <Link to="/admin/profile" className="flex items-center gap-2 p-1 md:p-1.5 pr-3 md:pr-4 rounded-xl bg-slate-50 border border-gray-100 hover:border-blue-100 transition-all active:scale-95">
               <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-[10px] shadow-lg shadow-blue-500/20">
-                {user?.initials || 'S'}
+                {user?.initials || 'A'}
               </div>
               <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest hidden sm:block">{user?.name?.split(' ')[0]}</span>
             </Link>
