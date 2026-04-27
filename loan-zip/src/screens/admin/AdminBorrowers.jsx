@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, Trash2, Search, Filter, User, ShieldCheck, MapPin, Phone, Calendar, ArrowUpRight, TrendingUp, AlertTriangle, Hash, Lock, Database, Target, Activity, Globe } from 'lucide-react';
-import api from '../../services/api';
+import api, { IMAGE_BASE_URL } from '../../services/api';
 import { RiskBadge, Btn, PageHeader, ConfirmDialog } from '../../components/UI';
 import Modal from '../../components/Modal';
 import { THEME } from '../../theme';
@@ -221,7 +221,7 @@ export default function AdminBorrowers() {
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Borrower Photo</p>
                   <div className="w-full h-48 rounded-2xl bg-white border border-gray-100 overflow-hidden flex items-center justify-center">
                      {viewModal.photo_url ? (
-                        <img src={api.defaults.baseURL.replace('/api', '') + viewModal.photo_url} className="w-full h-full object-cover" alt="Borrower" />
+                        <img src={IMAGE_BASE_URL + viewModal.photo_url} className="w-full h-full object-cover" alt="Borrower" />
                      ) : (
                         <div className="flex flex-col items-center gap-2 text-slate-300">
                            <User size={32} />
@@ -235,9 +235,9 @@ export default function AdminBorrowers() {
                   <div className="w-full h-48 rounded-2xl bg-white border border-gray-100 overflow-hidden flex items-center justify-center relative group">
                      {viewModal.nrc_url ? (
                         <>
-                           <img src={api.defaults.baseURL.replace('/api', '') + viewModal.nrc_url} className="w-full h-full object-contain" alt="NRC" />
+                           <img src={IMAGE_BASE_URL + viewModal.nrc_url} className="w-full h-full object-contain" alt="NRC" />
                            <a 
-                              href={api.defaults.baseURL.replace('/api', '') + viewModal.nrc_url} 
+                              href={IMAGE_BASE_URL + viewModal.nrc_url} 
                               target="_blank" 
                               rel="noreferrer"
                               className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"

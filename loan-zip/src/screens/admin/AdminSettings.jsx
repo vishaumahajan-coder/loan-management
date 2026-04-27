@@ -16,6 +16,12 @@ export default function AdminSettings() {
     bank_account_name: '',
     bank_ifsc_code: '',
   });
+  const [bankLocal, setBankLocal] = useState({
+    bank_name: '',
+    bank_account_number: '',
+    bank_account_name: '',
+    bank_ifsc_code: ''
+  });
   const [loading, setLoading] = useState(true);
   const [toastMsg, setToastMsg] = useState('');
 
@@ -48,6 +54,13 @@ export default function AdminSettings() {
         default_period_days: Number(data.default_period_days || 30),
         free_trial_days: Number(data.free_trial_days || 365)
       }));
+
+      setBankLocal({
+        bank_name: data.bank_name || '',
+        bank_account_number: data.bank_account_number || '',
+        bank_account_name: data.bank_account_name || '',
+        bank_ifsc_code: data.bank_ifsc_code || ''
+      });
     } catch (err) {
       showToast('Failed to load settings');
     } finally {
@@ -65,6 +78,24 @@ export default function AdminSettings() {
     } catch (err) {
       showToast('Failed to update setting ❌');
       fetchSettings(); // Revert on failure
+    }
+  };
+
+  const handleBankSave = async () => {
+    try {
+      setLoading(true);
+      await Promise.all([
+        api.post('/settings/update', { key: 'bank_name', value: bankLocal.bank_name }),
+        api.post('/settings/update', { key: 'bank_account_name', value: bankLocal.bank_account_name }),
+        api.post('/settings/update', { key: 'bank_account_number', value: bankLocal.bank_account_number }),
+        api.post('/settings/update', { key: 'bank_ifsc_code', value: bankLocal.bank_ifsc_code }),
+      ]);
+      showToast('Bank details updated ✅');
+      fetchSettings();
+    } catch (err) {
+      showToast('Failed to update bank details ❌');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -222,9 +253,17 @@ export default function AdminSettings() {
 
             {!settings.online_payment_gateway_enabled && (
               <div className="pt-4 border-t border-slate-50">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
-                  <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">Manual Transfer (Bank Details)</h4>
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+                        <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">Manual Transfer (Bank Details)</h4>
+                    </div>
+                    <button 
+                        onClick={handleBankSave}
+                        className="px-4 py-1.5 bg-[#020617] text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 transition-all active:scale-95"
+                    >
+                        Save Details
+                    </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -232,8 +271,8 @@ export default function AdminSettings() {
                     <input
                       type="text"
                       placeholder="e.g. Stanbic Bank"
-                      value={settings.bank_name}
-                      onChange={(e) => handleUpdate('bank_name', e.target.value)}
+                      value={bankLocal.bank_name}
+                      onChange={(e) => setBankLocal(prev => ({...prev, bank_name: e.target.value}))}
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-300"
                     />
                   </div>
@@ -242,8 +281,8 @@ export default function AdminSettings() {
                     <input
                       type="text"
                       placeholder="e.g. Lendanet Solutions"
-                      value={settings.bank_account_name}
-                      onChange={(e) => handleUpdate('bank_account_name', e.target.value)}
+                      value={bankLocal.bank_account_name}
+                      onChange={(e) => setBankLocal(prev => ({...prev, bank_account_name: e.target.value}))}
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-300"
                     />
                   </div>
@@ -252,8 +291,8 @@ export default function AdminSettings() {
                     <input
                       type="text"
                       placeholder="Enter 10-15 digit account number"
-                      value={settings.bank_account_number}
-                      onChange={(e) => handleUpdate('bank_account_number', e.target.value)}
+                      value={bankLocal.bank_account_number}
+                      onChange={(e) => setBankLocal(prev => ({...prev, bank_account_number: e.target.value}))}
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-300 font-mono"
                     />
                   </div>
@@ -262,8 +301,8 @@ export default function AdminSettings() {
                     <input
                       type="text"
                       placeholder="Enter Bank Code"
-                      value={settings.bank_ifsc_code}
-                      onChange={(e) => handleUpdate('bank_ifsc_code', e.target.value)}
+                      value={bankLocal.bank_ifsc_code}
+                      onChange={(e) => setBankLocal(prev => ({...prev, bank_ifsc_code: e.target.value}))}
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-300 font-mono uppercase"
                     />
                   </div>

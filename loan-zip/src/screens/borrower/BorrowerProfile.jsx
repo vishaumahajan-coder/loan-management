@@ -5,7 +5,7 @@ import { RiskBadge, Btn, PageHeader } from '../../components/UI';
 import Modal from '../../components/Modal';
 import { LogOut, Phone, UserCheck, Shield, Calendar, Edit3, Lock, Camera, Upload, Gift } from 'lucide-react';
 import { THEME } from '../../theme';
-import api from '../../services/api';
+import api, { IMAGE_BASE_URL } from '../../services/api';
 
 export default function BorrowerProfile() {
   const { user, logout, updateUser } = useAuth();
@@ -125,10 +125,9 @@ export default function BorrowerProfile() {
             <div className="w-20 h-20 rounded-2xl bg-blue-50 border-4 border-white shadow-lg flex items-center justify-center text-blue-700 font-black text-2xl overflow-hidden relative group">
               {user?.profile_image_url ? (
                 <img 
-                  src={api.defaults.baseURL.replace('/api', '') + user.profile_image_url} 
+                  src={IMAGE_BASE_URL + user.profile_image_url} 
                   alt="Profile" 
                   className="w-full h-full object-cover"
-                  onError={(e) => { e.target.style.display = 'none'; }}
                 />
               ) : (
                 <span>{user?.initials || 'BW'}</span>
@@ -234,12 +233,12 @@ export default function BorrowerProfile() {
            <div className="mt-3 space-y-3">
               <div className="p-2 bg-blue-50 rounded-lg flex items-center justify-between">
                  <span className="text-[9px] font-black text-blue-600 uppercase italic">Your NRC document is securely attached</span>
-                 <a href={api.defaults.baseURL.replace('/api', '') + user.license_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-3 py-1.5 rounded-md font-bold uppercase tracking-wider">View Full</a>
+                 <a href={IMAGE_BASE_URL + user.license_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-3 py-1.5 rounded-md font-bold uppercase tracking-wider">View Full</a>
               </div>
               {/* NRC Preview if it's an image */}
               {(user.license_url.toLowerCase().endsWith('.jpg') || user.license_url.toLowerCase().endsWith('.png') || user.license_url.toLowerCase().endsWith('.jpeg') || user.license_url.toLowerCase().endsWith('.webp')) && (
                 <div className="w-full h-48 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
-                  <img src={api.defaults.baseURL.replace('/api', '') + user.license_url} alt="NRC Proof" className="w-full h-full object-contain" />
+                  <img src={IMAGE_BASE_URL + user.license_url} alt="NRC Proof" className="w-full h-full object-contain" />
                 </div>
               )}
            </div>

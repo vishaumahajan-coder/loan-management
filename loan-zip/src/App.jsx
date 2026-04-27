@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginScreen    from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import OtpVerifyScreen from './screens/OtpVerifyScreen';
+import LandingPage     from './screens/LandingPage';
 
 // Layouts
 import LenderLayout   from './layouts/LenderLayout';
@@ -33,7 +34,7 @@ import AdminReferrals   from './screens/admin/AdminReferrals';
 import AdminMembership  from './screens/admin/AdminMembership';
 import AdminMembershipRequests from './screens/admin/AdminMembershipRequests';
 import AdminSettings    from './screens/admin/AdminSettings';
-
+import AdminMessages    from './screens/admin/AdminMessages';
 
 // Borrower screens
 import BorrowerDashboard from './screens/borrower/BorrowerDashboard';
@@ -49,18 +50,11 @@ function RequireRole({ role, children }) {
   return children;
 }
 
-function RootRedirect() {
-  // Always redirect the root URL to the login page, as requested by the user,
-  // instead of automatically taking them to the dashboard if a session exists.
-  return <Navigate to="/login" replace />;
-}
-
-// ── App ───────────────────────────────────────────────────────────────────────
 function AppRoutes() {
   return (
     <Routes>
-      {/* Root redirect */}
-      <Route path="/" element={<RootRedirect />} />
+      {/* Root - Always show Landing Page */}
+      <Route path="/" element={<LandingPage />} />
 
       {/* Public */}
       <Route path="/login"    element={<LoginScreen />} />
@@ -101,7 +95,7 @@ function AppRoutes() {
         <Route path="membership"        element={<AdminMembership />} />
         <Route path="membership-requests" element={<AdminMembershipRequests />} />
         <Route path="settings"          element={<AdminSettings />} />
-
+        <Route path="messages"          element={<AdminMessages />} />
       </Route>
 
       {/* ── Borrower ── */}

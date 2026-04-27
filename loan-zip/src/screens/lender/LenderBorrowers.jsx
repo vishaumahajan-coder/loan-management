@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
+import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import {
   UserPlus,
@@ -167,7 +168,25 @@ export default function LenderBorrowers() {
       showToast(`${form.name} processed successfully.`);
       fetchBorrowers();
     } catch (error) {
-      showToast(error.response?.data?.message || 'Error adding borrower');
+      if (error.response?.status === 409) {
+        const existing = error.response.data.existingBorrower;
+        setAddModal(false);
+        Swal.fire({
+          title: 'Already Registered',
+          text: `NRC ${form.nrc} is already registered as ${existing.name}.`,
+          icon: 'info',
+          showCancelButton: true,
+          confirmButtonText: 'View Profile',
+          cancelButtonText: 'Close',
+          confirmButtonColor: '#3b82f6',
+        }).then((result) => {
+          if (result.isConfirmed) {
+            setViewModal(existing);
+          }
+        });
+      } else {
+        showToast(error.response?.data?.message || 'Error adding borrower');
+      }
     }
   };
 

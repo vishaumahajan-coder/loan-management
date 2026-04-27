@@ -19,7 +19,7 @@ import {
   Database,
   Camera
 } from 'lucide-react';
-import api from '../../services/api';
+import api, { IMAGE_BASE_URL } from '../../services/api';
 import { StatusBadge, Btn, PageHeader, ConfirmDialog } from '../../components/UI';
 import Modal from '../../components/Modal';
 import { THEME } from '../../theme';
@@ -336,7 +336,7 @@ export default function AdminLenders() {
                  <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white font-black text-xl shadow-xl overflow-hidden">
                     {viewModal.profile_image_url ? (
                       <img 
-                        src={api.defaults.baseURL.replace('/api', '') + viewModal.profile_image_url} 
+                        src={IMAGE_BASE_URL + viewModal.profile_image_url} 
                         alt="Lender" 
                         className="w-full h-full object-cover"
                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
@@ -390,18 +390,19 @@ export default function AdminLenders() {
                <div className="p-4 border-b border-gray-100 bg-slate-50 flex items-center justify-between">
                   <h4 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Uploaded Documents</h4>
                   <Upload size={14} className="text-slate-400" />
-                            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+               </div>
+               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="border border-gray-100 rounded-3xl p-5 flex flex-col items-center gap-3 bg-gray-50/50 shadow-sm">
                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Proof of Licence</p>
                      {viewModal.license_url ? (
                        <a
-                         href={api.defaults.baseURL.replace('/api', '') + viewModal.license_url}
+                         href={IMAGE_BASE_URL + viewModal.license_url}
                          target="_blank"
                          rel="noopener noreferrer"
                          className="w-full relative group/img cursor-zoom-in"
                        >
                          <img
-                           src={api.defaults.baseURL.replace('/api', '') + viewModal.license_url}
+                           src={IMAGE_BASE_URL + viewModal.license_url}
                            alt="License Document"
                            className="w-full h-48 object-cover rounded-2xl border border-gray-200 shadow-sm group-hover/img:brightness-75 transition-all"
                            onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
@@ -446,7 +447,6 @@ export default function AdminLenders() {
                      )}
                   </div>
                 </div>
-   </div>
             </div>
 
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col mt-4">

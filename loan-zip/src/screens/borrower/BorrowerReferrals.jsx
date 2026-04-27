@@ -106,7 +106,7 @@ export default function BorrowerReferrals() {
           { label: 'Total Invited', value: stats.total, icon: Users, color: 'blue' },
           { label: 'Qualified', value: stats.qualified, icon: CheckCircle2, color: 'green' },
           { label: 'Pending', value: stats.pending, icon: Clock, color: 'orange' },
-          { label: 'Total Earned', value: `K${stats.earnings}`, icon: TrendingUp, color: 'indigo' },
+          { label: 'Total Earned', value: THEME.formatCurrency(stats.earnings), icon: TrendingUp, color: 'indigo' },
         ].map((s, i) => (
           <div key={i} className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col items-center text-center">
             <div className={`w-10 h-10 rounded-2xl bg-${s.color}-50 text-${s.color}-600 flex items-center justify-center mb-3`}>
@@ -169,7 +169,7 @@ export default function BorrowerReferrals() {
                 </div>
                 <div className="text-right">
                   <p className={`text-sm font-black ${ref.status === 'qualified' ? 'text-gray-900' : 'text-amber-600'}`}>
-                    {ref.status === 'qualified' ? '+K50' : 'Pending'}
+                    {ref.status === 'qualified' ? THEME.formatCurrency(50) : 'Pending'}
                   </p>
                   <p className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">
                     {ref.status === 'qualified' ? 'Bonus Qualified' : 'Verifying activity'}

@@ -3,7 +3,8 @@ import axios from 'axios';
 // Base API Configuration
 // const API_BASE_URL = 'http://localhost:5000/api';
 // const API_BASE_URL = 'https://lendanet-loan-production.up.railway.app/api';
-const API_BASE_URL = 'https://lendent-loan-backend-production.up.railway.app/api';
+// const API_BASE_URL = 'https://lendent-loan-backend-production.up.railway.app/api';
+const API_BASE_URL = 'https://lendent-loan-backend-production-fdd3.up.railway.app/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -34,4 +35,5 @@ api.interceptors.response.use(
 );
 
 export default api;
-export { API_BASE_URL };
+const IMAGE_BASE_URL = API_BASE_URL.replace('/api', '');
+export { API_BASE_URL, IMAGE_BASE_URL };

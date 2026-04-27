@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, Edit2, Phone, Mail, Building, User, Shield, Camera, Gift, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import api, { API_BASE_URL } from '../../services/api';
+import api, { API_BASE_URL, IMAGE_BASE_URL } from '../../services/api';
 import { Btn, PageHeader } from '../../components/UI';
 import Modal from '../../components/Modal';
 
@@ -23,6 +23,12 @@ export default function LenderProfile() {
     phone: user?.phone || '',
     newPassword: '',
     confirmPassword: '',
+    airtel_money_number: user?.airtel_money_number || '',
+    mtn_money_number: user?.mtn_money_number || '',
+    zamtel_money_number: user?.zamtel_money_number || '',
+    bank_name: user?.bank_name || '',
+    bank_account_number: user?.bank_account_number || '',
+    bank_account_name: user?.bank_account_name || ''
   });
   const [toastMsg, setToastMsg] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -70,10 +76,9 @@ export default function LenderProfile() {
               <div className="w-20 h-20 rounded-2xl bg-blue-50 border-4 border-white shadow-lg flex items-center justify-center text-blue-700 font-black text-2xl overflow-hidden relative group">
                 {user?.profile_image_url ? (
                   <img 
-                    src={API_BASE_URL.replace('/api', '') + user.profile_image_url} 
+                    src={IMAGE_BASE_URL + user.profile_image_url} 
                     alt="Profile" 
                     className="w-full h-full object-cover"
-                    onError={(e) => { e.target.style.display = 'none'; }}
                   />
                 ) : (
                   <span>{user?.initials || 'LP'}</span>
@@ -115,6 +120,33 @@ export default function LenderProfile() {
               </div>
             ))}
           </div>
+
+          {/* Payment Info in Profile Card */}
+          <div className="mt-6">
+             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 px-1">Payment Methods (Zambia)</h3>
+             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { label: 'Airtel', value: user?.airtel_money_number, color: 'text-red-600', bg: 'bg-red-50' },
+                  { label: 'MTN', value: user?.mtn_money_number, color: 'text-yellow-600', bg: 'bg-yellow-50' },
+                  { label: 'Zamtel', value: user?.zamtel_money_number, color: 'text-green-600', bg: 'bg-green-50' }
+                ].map((m) => (
+                  <div key={m.label} className={`${m.bg} p-3 rounded-xl border border-gray-100`}>
+                    <p className={`text-[9px] font-black uppercase ${m.color}`}>{m.label} Money</p>
+                    <p className="text-xs font-bold text-gray-800 mt-1">{m.value || 'Not Set'}</p>
+                  </div>
+                ))}
+             </div>
+             {user?.bank_name && (
+               <div className="mt-3 p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                  <p className="text-[9px] font-black uppercase text-indigo-600 tracking-tight">Bank Details</p>
+                  <div className="flex justify-between items-center mt-1">
+                    <p className="text-xs font-bold text-gray-800">{user.bank_name}</p>
+                    <p className="text-[10px] font-medium text-gray-500">{user.bank_account_number}</p>
+                  </div>
+                  <p className="text-[10px] font-bold text-gray-600 mt-0.5">{user.bank_account_name}</p>
+               </div>
+             )}
+          </div>
         </div>
       </div>
 
@@ -142,12 +174,12 @@ export default function LenderProfile() {
                <div className="space-y-3">
                   <div className="p-2 bg-blue-50 rounded-lg flex items-center justify-between">
                      <span className="text-[9px] font-black text-blue-600 uppercase">License file attached</span>
-                     <a href={API_BASE_URL.replace('/api', '') + user.license_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-md font-bold hover:bg-blue-700 transition-colors">View</a>
+                     <a href={IMAGE_BASE_URL + user.license_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-md font-bold hover:bg-blue-700 transition-colors">View</a>
                   </div>
                   {/* Inline Image Preview */}
                   {(user.license_url.toLowerCase().endsWith('.jpg') || user.license_url.toLowerCase().endsWith('.png') || user.license_url.toLowerCase().endsWith('.jpeg') || user.license_url.toLowerCase().endsWith('.webp')) && (
                     <div className="w-full h-40 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
-                      <img src={API_BASE_URL.replace('/api', '') + user.license_url} alt="License Proof" className="w-full h-full object-contain" />
+                      <img src={IMAGE_BASE_URL + user.license_url} alt="License Proof" className="w-full h-full object-contain" />
                     </div>
                   )}
                </div>
@@ -177,12 +209,12 @@ export default function LenderProfile() {
                <div className="space-y-3">
                   <div className="p-2 bg-blue-50 rounded-lg flex items-center justify-between">
                      <span className="text-[9px] font-black text-blue-600 uppercase">NRC file attached</span>
-                     <a href={API_BASE_URL.replace('/api', '') + user.nrc_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-md font-bold hover:bg-blue-700 transition-colors">View</a>
+                     <a href={IMAGE_BASE_URL + user.nrc_url} target="_blank" rel="noreferrer" className="text-[9px] bg-blue-600 text-white px-3 py-1 rounded-md font-bold hover:bg-blue-700 transition-colors">View</a>
                   </div>
                   {/* Inline Image Preview */}
                   {(user.nrc_url.toLowerCase().endsWith('.jpg') || user.nrc_url.toLowerCase().endsWith('.png') || user.nrc_url.toLowerCase().endsWith('.jpeg') || user.nrc_url.toLowerCase().endsWith('.webp')) && (
                     <div className="w-full h-40 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
-                      <img src={API_BASE_URL.replace('/api', '') + user.nrc_url} alt="NRC Proof" className="w-full h-full object-contain" />
+                      <img src={IMAGE_BASE_URL + user.nrc_url} alt="NRC Proof" className="w-full h-full object-contain" />
                     </div>
                   )}
                </div>
@@ -235,6 +267,46 @@ export default function LenderProfile() {
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
               </div>
             ))}
+          </div>
+
+          <div className="pt-4 border-t border-gray-100">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-1">Mobile Money Options (Zambia)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { label: 'Airtel Money Number', key: 'airtel_money_number' },
+                { label: 'MTN Money Number', key: 'mtn_money_number' },
+                { label: 'Zamtel Money Number', key: 'zamtel_money_number' },
+              ].map(({ label, key }) => (
+                <div key={key} className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">{label}</label>
+                  <input type="tel" value={form[key]} onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
+                    placeholder="e.g. 097..."
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-gray-100">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-1">Bank Account (Optional)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Bank Name</label>
+                <input type="text" value={form.bank_name} onChange={e => setForm(f => ({ ...f, bank_name: e.target.value }))}
+                  placeholder="e.g. FNB, ABSA, Stanchart"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Account Number</label>
+                <input type="text" value={form.bank_account_number} onChange={e => setForm(f => ({ ...f, bank_account_number: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+              </div>
+              <div className="flex flex-col gap-1.5 md:col-span-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Account Holder Name</label>
+                <input type="text" value={form.bank_account_name} onChange={e => setForm(f => ({ ...f, bank_account_name: e.target.value }))}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+              </div>
+            </div>
           </div>
 
           <div className="pt-4 border-t border-gray-100">

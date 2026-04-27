@@ -4,6 +4,7 @@ import { Eye, EyeOff, ArrowLeft, Upload, Gift, User, Phone, Mail, Briefcase, Loc
 import axios from 'axios';
 import api, { API_BASE_URL } from '../services/api';
 import Swal from 'sweetalert2';
+import { THEME } from '../theme';
 
 const Field = ({ label, icon: Icon, children }) => (
   <div className="group">
@@ -303,7 +304,7 @@ export default function RegisterScreen() {
                            membershipPlans.map(p => {
                              const value = p.name.toLowerCase();
                              const label = p.name;
-                             let subLabel = `K${p.price}`;
+                             let subLabel = THEME.formatCurrency(p.price);
                              if (value.includes('monthly')) subLabel += '/mo';
                              if (value.includes('annual')) subLabel += '/yr';
                              
@@ -322,9 +323,9 @@ export default function RegisterScreen() {
                            })
                         ) : (
                           [
-                            { value: 'free', label: 'Free', sub: 'K0' },
-                            { value: 'monthly', label: 'Monthly', sub: 'K0' },
-                            { value: 'annual', label: 'Annual', sub: 'K0' },
+                            { value: 'free', label: 'Free', sub: 'K0.00' },
+                            { value: 'monthly', label: 'Monthly', sub: 'K0.00' },
+                            { value: 'annual', label: 'Annual', sub: 'K0.00' },
                           ].map(p => (
                             <button key={p.value} type="button"
                               className="py-3 rounded-2xl text-center bg-white border border-slate-200 text-gray-400 opacity-50 cursor-not-allowed"

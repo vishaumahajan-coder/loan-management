@@ -28,7 +28,11 @@ export default function BorrowerLoans() {
   const [viewModal, setViewModal] = useState(null);
   const [platformSettings, setPlatformSettings] = useState(null);
   const [manualPaymentTask, setManualPaymentTask] = useState(null); // { loanId, installmentId, amount }
-  const [transactionRef, setTransactionRef] = useState('');
+  const [paymentData, setPaymentData] = useState({
+    reference: '',
+    senderBank: '',
+    senderAccount: ''
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
 
@@ -90,28 +94,26 @@ export default function BorrowerLoans() {
   });
 
   const handlePayment = async (loanId, installmentId, amount) => {
-    if (platformSettings?.online_payment_gateway_enabled === true || platformSettings?.online_payment_gateway_enabled === 'true') {
-      alert('Online Payment Gateway integration is coming soon! Please use manual transfer for now.');
-      return;
-    }
-
+    // Online Payment Gateway integration is coming soon! Using manual transfer for now.
     setManualPaymentTask({ loanId, installmentId, amount });
-    setTransactionRef('');
+    setPaymentData({ reference: '', senderBank: '', senderAccount: '' });
   };
 
   const confirmManualPayment = async () => {
-    if (!transactionRef.trim()) {
-      alert('Please enter a transaction reference / ID for tracking.');
+    if (!paymentData.reference.trim()) {
+      alert('Please enter a Transaction Reference / ID.');
       return;
     }
 
     setIsSubmitting(true);
     try {
+      const fullRef = `${paymentData.reference} | Bank: ${paymentData.senderBank} | Acc: ${paymentData.senderAccount}`;
+      
       await api.post(`/loans/${manualPaymentTask.loanId}/payment`, {
         amount: manualPaymentTask.amount,
         method: 'Bank Transfer',
         installmentId: manualPaymentTask.installmentId,
-        reference: transactionRef
+        reference: fullRef
       });
       
       alert('Payment reference submitted! An admin/lender will verify it. 🎉');
@@ -388,41 +390,127 @@ export default function BorrowerLoans() {
               </p>
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4 shadow-sm">
-              <div className="grid grid-cols-2 gap-y-4 gap-x-2">
-                <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Bank Name</p>
-                  <p className="text-xs font-bold text-slate-900">{platformSettings?.bank_name || 'N/A'}</p>
+            <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-5 shadow-sm">
+              {/* Mobile Money Options */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-2 p-1 bg-slate-50 rounded-lg">
+                  <div className="w-1 h-4 bg-emerald-600 rounded-full"></div>
+                  <h5 className="text-[10px] font-black text-slate-900 uppercase">Mobile Money (Zambia):</h5>
                 </div>
-                <div>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Holder</p>
-                  <p className="text-xs font-bold text-slate-900">{platformSettings?.bank_account_name || 'N/A'}</p>
+                <div className="grid grid-cols-1 gap-2">
+                  {viewModal?.airtel_money_number && (
+                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100">
+                      <span className="text-[10px] font-black text-red-600 uppercase">Airtel Money</span>
+                      <span className="text-sm font-black text-slate-900 font-mono">{viewModal.airtel_money_number}</span>
+                    </div>
+                  )}
+                  {viewModal?.mtn_money_number && (
+                    <div className="flex justify-between items-center p-3 bg-yellow-50 rounded-xl border border-yellow-100">
+                      <span className="text-[10px] font-black text-yellow-600 uppercase">MTN Money</span>
+                      <span className="text-sm font-black text-slate-900 font-mono">{viewModal.mtn_money_number}</span>
+                    </div>
+                  )}
+                  {viewModal?.zamtel_money_number && (
+                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-xl border border-green-100">
+                      <span className="text-[10px] font-black text-green-600 uppercase">Zamtel Money</span>
+                      <span className="text-sm font-black text-slate-900 font-mono">{viewModal.zamtel_money_number}</span>
+                    </div>
+                  )}
+                  {!viewModal?.airtel_money_number && !viewModal?.mtn_money_number && !viewModal?.zamtel_money_number && (
+                    <p className="text-[10px] text-slate-400 italic text-center">No mobile money options set by lender.</p>
+                  )}
                 </div>
-                <div className="col-span-2 pt-2 border-t border-slate-50">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Number</p>
-                  <p className="text-lg font-black text-[#020617] tracking-wider font-mono">{platformSettings?.bank_account_number || 'N/A'}</p>
+              </div>
+
+              {/* Bank Details */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center gap-2 mb-2 p-1 bg-slate-50 rounded-lg">
+                  <div className="w-1 h-4 bg-blue-600 rounded-full"></div>
+                  <h5 className="text-[10px] font-black text-slate-900 uppercase">Lender Bank Account:</h5>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">IFSC / Branch Code</p>
-                  <p className="text-xs font-bold text-slate-900 font-mono uppercase">{platformSettings?.bank_ifsc_code || 'N/A'}</p>
-                </div>
+                {viewModal?.bank_name ? (
+                  <div className="grid grid-cols-2 gap-y-4 gap-x-2 opacity-90 p-1">
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Bank Name</p>
+                      <p className="text-xs font-bold text-slate-900">{viewModal.bank_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">A/C Name</p>
+                      <p className="text-xs font-bold text-slate-900">{viewModal.bank_account_name || 'N/A'}</p>
+                    </div>
+                    <div className="col-span-2 pt-2 border-t border-slate-50">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">A/C Number</p>
+                      <p className="text-lg font-black text-[#020617] tracking-wider font-mono">{viewModal.bank_account_number || 'N/A'}</p>
+                    </div>
+                  </div>
+                ) : platformSettings?.bank_name ? (
+                  <div className="grid grid-cols-2 gap-y-4 gap-x-2 opacity-90 p-1">
+                    <div className="col-span-2 mb-2">
+                       <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Admin/Platform Account (Fallback)</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Bank Name</p>
+                      <p className="text-xs font-bold text-slate-900">{platformSettings.bank_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">A/C Name</p>
+                      <p className="text-xs font-bold text-slate-900">{platformSettings.bank_account_name || 'N/A'}</p>
+                    </div>
+                    <div className="col-span-2 pt-2 border-t border-slate-50">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">A/C Number</p>
+                      <p className="text-lg font-black text-[#020617] tracking-wider font-mono">{platformSettings.bank_account_number || 'N/A'}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-slate-400 italic text-center">No bank details set by lender or admin.</p>
+                )}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Payment Reference / Transaction ID</label>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="e.g. TXN1234567890"
-                  value={transactionRef}
-                  onChange={(e) => setTransactionRef(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:font-medium placeholder:text-slate-300"
-                />
-                <Activity size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300" />
+            <div className="space-y-4 pt-2 border-t border-slate-100">
+               <div className="flex items-center gap-2 mb-2 p-1">
+                <Activity size={16} className="text-blue-600" />
+                <h5 className="text-[10px] font-black text-slate-900 uppercase">Your Payment Details:</h5>
               </div>
-              <p className="text-[9px] text-slate-400 italic px-1 font-medium italic">
-                * Note: Your record will be updated once the transfer is verified.
+              
+              <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Payment Reference / TXN ID</label>
+                  <input
+                    type="text"
+                    placeholder="Enter Reference ID"
+                    value={paymentData.reference}
+                    onChange={(e) => setPaymentData(prev => ({...prev, reference: e.target.value}))}
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-300"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Your Bank Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Stanbic"
+                      value={paymentData.senderBank}
+                      onChange={(e) => setPaymentData(prev => ({...prev, senderBank: e.target.value}))}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-300"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Your Acc Number</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 12345..."
+                      value={paymentData.senderAccount}
+                      onChange={(e) => setPaymentData(prev => ({...prev, senderAccount: e.target.value}))}
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-black text-slate-900 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-300"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <p className="text-[9px] text-slate-400 italic px-1">
+                * Our team will verify this record against the bank statement.
               </p>
             </div>
 

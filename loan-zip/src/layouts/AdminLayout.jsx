@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard, Users, UserCheck, CreditCard, User,
-  Shield, ClipboardList, LogOut, Menu, X, ChevronRight, Search, Gift, Star, Settings
+  Shield, ClipboardList, LogOut, Menu, X, ChevronRight, Search, Gift, Star, Settings, Mail
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { THEME } from '../theme';
@@ -19,6 +19,7 @@ const NAV = [
   { path: '/admin/membership', label: 'Memberships', icon: Star },
   { path: '/admin/membership-requests', label: 'Upgrade Requests', icon: Shield },
   { path: '/admin/settings', label: 'Settings', icon: Settings },
+  { path: '/admin/messages', label: 'Inquiries', icon: Mail },
 ];
 
 

@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
 import { LayoutDashboard, CreditCard, User, LogOut, Menu, X, ChevronRight, Search, Gift } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { THEME } from '../theme';
-import { API_BASE_URL } from '../services/api';
+import { API_BASE_URL, IMAGE_BASE_URL } from '../services/api';
 
 const NAV = [
   { path: '/borrower/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -37,10 +37,9 @@ export default function BorrowerLayout() {
         <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-sm flex-shrink-0 overflow-hidden">
           {user?.profile_image_url ? (
             <img 
-              src={API_BASE_URL.replace('/api', '') + user.profile_image_url} 
+              src={IMAGE_BASE_URL + user.profile_image_url} 
               alt="Avatar" 
               className="w-full h-full object-cover"
-              onError={(e) => { e.target.style.display = 'none'; }}
             />
           ) : (
             <span>{user?.initials || 'BW'}</span>
@@ -130,10 +129,9 @@ export default function BorrowerLayout() {
               <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-[10px] shadow-lg shadow-blue-500/20 overflow-hidden">
                 {user?.profile_image_url ? (
                   <img 
-                    src={API_BASE_URL.replace('/api', '') + user.profile_image_url} 
+                    src={IMAGE_BASE_URL + user.profile_image_url} 
                     alt="Avatar" 
                     className="w-full h-full object-cover"
-                    onError={(e) => { e.target.style.display = 'none'; }}
                   />
                 ) : (
                   <span>{user?.initials || 'BW'}</span>
